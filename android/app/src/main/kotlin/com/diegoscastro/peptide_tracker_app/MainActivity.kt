@@ -1,0 +1,5 @@
+package com.diegoscastro.peptide_tracker_app
+
+import io.flutter.embedding.android.FlutterActivity
+
+class MainActivity : FlutterActivity()

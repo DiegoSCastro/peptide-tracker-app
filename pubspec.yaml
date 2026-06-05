@@ -1,0 +1,25 @@
+name: peptide_tracker_app
+description: Peptide tracker app starter built with Flutter, Cubit, and FPDart.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.8.1
+
+dependencies:
+  cupertino_icons: ^1.0.8
+  equatable: ^2.0.8
+  flutter:
+    sdk: flutter
+  flutter_bloc: ^9.1.1
+  fpdart: ^1.2.0
+
+dev_dependencies:
+  bloc_test: ^10.0.0
+  flutter_test:
+    sdk: flutter
+  mocktail: ^1.0.5
+  very_good_analysis: ^9.0.0
+
+flutter:
+  uses-material-design: true
