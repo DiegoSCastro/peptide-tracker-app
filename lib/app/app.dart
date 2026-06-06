@@ -1,40 +1,165 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:peptide_tracker_app/src/features/peptides/data/datasources/peptides_local_data_source.dart';
-import 'package:peptide_tracker_app/src/features/peptides/data/repositories/peptides_repository_impl.dart';
-import 'package:peptide_tracker_app/src/features/peptides/domain/repositories/peptides_repository.dart';
-import 'package:peptide_tracker_app/src/features/peptides/presentation/cubit/peptides_cubit.dart';
-import 'package:peptide_tracker_app/src/features/peptides/presentation/view/peptides_page.dart';
+import 'package:peptide_tracker_app/src/core/database/app_database.dart';
+import 'package:peptide_tracker_app/src/core/notifications/notification_gateway.dart';
+import 'package:peptide_tracker_app/src/core/notifications/protocol_reminder_scheduler.dart';
+import 'package:peptide_tracker_app/src/features/history/data/repositories/drift_log_entries_repository.dart';
+import 'package:peptide_tracker_app/src/features/history/domain/repositories/log_entries_repository.dart';
+import 'package:peptide_tracker_app/src/features/onboarding/data/app_launch_repository.dart';
+import 'package:peptide_tracker_app/src/features/onboarding/presentation/view/onboarding_flow.dart';
+import 'package:peptide_tracker_app/src/features/protocols/data/repositories/drift_protocols_repository.dart';
+import 'package:peptide_tracker_app/src/features/protocols/domain/entities/managed_protocol.dart';
+import 'package:peptide_tracker_app/src/features/protocols/domain/repositories/protocols_repository.dart';
+import 'package:peptide_tracker_app/src/features/shell/presentation/view/app_shell.dart';
 
 /// Root application widget.
-class App extends StatelessWidget {
+class App extends StatefulWidget {
   /// Creates the application shell.
-  const App({super.key});
+  const App({
+    super.key,
+    this.database,
+    this.launchRepository,
+    this.protocolsRepository,
+    this.logEntriesRepository,
+    this.notificationGateway = const NoopNotificationGateway(),
+    DateTime Function()? now,
+  }) : now = now ?? DateTime.now;
+
+  /// Optional database override used by tests.
+  final AppDatabase? database;
+
+  /// Optional launch repository override used by tests.
+  final AppLaunchRepository? launchRepository;
+
+  /// Optional protocols repository override used by tests.
+  final ProtocolsRepository? protocolsRepository;
+
+  final LogEntriesRepository? logEntriesRepository;
+
+  final NotificationGateway notificationGateway;
+
+  final DateTime Function() now;
 
   @override
-  Widget build(BuildContext context) {
-    return RepositoryProvider<PeptidesRepository>(
-      create: (_) => const PeptidesRepositoryImpl(
-        dataSource: PeptidesLocalDataSource(),
-      ),
-      child: BlocProvider(
-        create: (context) => PeptidesCubit(
-          repository: context.read<PeptidesRepository>(),
-        )..load(),
-        child: MaterialApp(
-          debugShowCheckedModeBanner: false,
-          title: 'Peptide Tracker',
-          theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: const Color(0xFF2E5BFF),
-              brightness: Brightness.dark,
-            ),
-            scaffoldBackgroundColor: const Color(0xFF0B1020),
-            useMaterial3: true,
-          ),
-          home: const PeptidesPage(),
+  State<App> createState() => _AppState();
+}
+
+class _AppState extends State<App> {
+  late final AppDatabase _database = widget.database ?? AppDatabase();
+  late final AppLaunchRepository _launchRepository =
+      widget.launchRepository ?? const SharedPrefsAppLaunchRepository();
+  late final ProtocolsRepository _protocolsRepository =
+      widget.protocolsRepository ??
+      DriftProtocolsRepository(database: _database);
+  late final LogEntriesRepository _logEntriesRepository =
+      widget.logEntriesRepository ??
+      DriftLogEntriesRepository(database: _database);
+  late final ProtocolReminderScheduler _reminderScheduler =
+      ProtocolReminderScheduler(gateway: widget.notificationGateway);
+
+  StreamSubscription<List<ManagedProtocol>>? _protocolSubscription;
+  late Future<_BootstrapState> _bootstrapFuture = _loadBootstrapState();
+
+  @override
+  void initState() {
+    super.initState();
+    _protocolSubscription = _protocolsRepository.watchAll().listen(
+      (items) => unawaited(
+        _reminderScheduler.syncProtocols(
+          items.map((item) => item.protocol),
+          now: widget.now(),
         ),
       ),
     );
+    unawaited(widget.notificationGateway.initialize());
   }
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Peptide Tracker',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF2E5BFF),
+          brightness: Brightness.dark,
+        ),
+        scaffoldBackgroundColor: const Color(0xFF0B1020),
+        useMaterial3: true,
+      ),
+      home: FutureBuilder<_BootstrapState>(
+        future: _bootstrapFuture,
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
+
+          final bootstrapState = snapshot.data!;
+          if (bootstrapState.needsOnboarding) {
+            return OnboardingFlow(
+              hasExistingProtocols: bootstrapState.protocolCount > 0,
+              launchRepository: _launchRepository,
+              protocolsRepository: _protocolsRepository,
+              requestNotificationPermissions: _requestNotificationPermissions,
+              onCompleted: _refreshBootstrapState,
+            );
+          }
+
+          return AppShell(
+            launchSnapshot: bootstrapState.launchSnapshot,
+            logEntriesRepository: _logEntriesRepository,
+            protocolsRepository: _protocolsRepository,
+            now: widget.now,
+          );
+        },
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _protocolSubscription?.cancel();
+    if (widget.database == null) {
+      unawaited(_database.close());
+    }
+    super.dispose();
+  }
+
+  Future<_BootstrapState> _loadBootstrapState() async {
+    final launchSnapshot = await _launchRepository.loadSnapshot();
+    final protocolCount = (await _protocolsRepository.watchAll().first).length;
+    final needsOnboarding =
+        !launchSnapshot.hasAcceptedCurrentDisclaimer || protocolCount == 0;
+
+    return _BootstrapState(
+      launchSnapshot: launchSnapshot,
+      protocolCount: protocolCount,
+      needsOnboarding: needsOnboarding,
+    );
+  }
+
+  Future<void> _refreshBootstrapState() async {
+    setState(() {
+      _bootstrapFuture = _loadBootstrapState();
+    });
+  }
+
+  Future<void> _requestNotificationPermissions() async {
+    await widget.notificationGateway.requestPermissions();
+  }
+}
+
+class _BootstrapState {
+  const _BootstrapState({
+    required this.launchSnapshot,
+    required this.protocolCount,
+    required this.needsOnboarding,
+  });
+
+  final LaunchSnapshot launchSnapshot;
+  final int protocolCount;
+  final bool needsOnboarding;
 }

@@ -18,3 +18,18 @@ final class EmptyCatalogFailure extends AppFailure {
   const EmptyCatalogFailure()
     : super('No peptides are available in the local catalog.');
 }
+
+/// Returned when local persistence fails.
+final class StorageFailure extends AppFailure {
+  /// Creates the storage failure.
+  const StorageFailure([
+    super.message = 'Unable to save local data right now.',
+  ]);
+}
+
+/// Returned when the free tier protocol limit is reached.
+final class ProtocolLimitReachedFailure extends AppFailure {
+  /// Creates the protocol limit failure.
+  const ProtocolLimitReachedFailure()
+    : super('Free supports 1 active routine. Upgrade later for more.');
+}

@@ -6,6 +6,7 @@ import 'package:fpdart/fpdart.dart';
 import 'package:peptide_tracker_app/app/app.dart';
 import 'package:peptide_tracker_app/src/core/failures/app_failure.dart';
 import 'package:peptide_tracker_app/src/features/onboarding/data/app_launch_repository.dart';
+import 'package:peptide_tracker_app/src/features/onboarding/domain/protocol_draft.dart';
 import 'package:peptide_tracker_app/src/features/protocols/domain/entities/compound.dart';
 import 'package:peptide_tracker_app/src/features/protocols/domain/entities/compound_category.dart';
 import 'package:peptide_tracker_app/src/features/protocols/domain/entities/managed_protocol.dart';
@@ -18,105 +19,89 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'test_support/noop_log_entries_repository.dart';
 
 void main() {
-  testWidgets('returning users can open the calculator from the main shell', (
-    tester,
-  ) async {
-    SharedPreferences.setMockInitialValues({
-      'legal.acceptedDisclaimerVersion': currentDisclaimerVersion,
-      'legal.acceptedAt': DateTime.utc(2026, 6, 5).toIso8601String(),
-      'protocols.firstProtocol': '{"name":"Morning routine"}',
-    });
+  testWidgets(
+    'requires explicit disclaimer acceptance before creating the first protocol',
+    (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final repository = _InMemoryProtocolsRepository();
+      addTearDown(repository.dispose);
 
-    final repository = _InMemoryProtocolsRepository(
-      initialItems: [
-        _managedProtocol(name: 'Morning routine', compoundName: 'Semaglutide'),
-      ],
-    );
-    addTearDown(repository.dispose);
+      Future<void> settleApp() async {
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
+      }
 
-    Future<void> settleApp() async {
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 50));
-    }
+      await tester.pumpWidget(
+        App(
+          protocolsRepository: repository,
+          logEntriesRepository: const NoopLogEntriesRepository(),
+        ),
+      );
+      await settleApp();
 
-    await tester.pumpWidget(
-      App(
-        protocolsRepository: repository,
-        logEntriesRepository: const NoopLogEntriesRepository(),
-      ),
-    );
-    await settleApp();
+      expect(find.text('Private peptide and GLP-1 tracker'), findsOneWidget);
+      expect(find.text('Continue'), findsOneWidget);
 
-    expect(find.text('Today'), findsWidgets);
+      await tester.tap(find.text('Continue'));
+      await settleApp();
 
-    await tester.tap(find.text('Calculator').last);
-    await settleApp();
+      expect(find.text('Medical and safety notice'), findsOneWidget);
+      expect(
+        find.text(
+          'I understand this app is a tracking tool and not medical advice.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('I understand'), findsNothing);
 
-    expect(find.text('User-input calculator'), findsOneWidget);
-    expect(find.text('Enter values manually'), findsOneWidget);
+      await tester.tap(find.text('Continue'));
+      await settleApp();
 
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'Vial amount'),
-      '10',
-    );
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'Dilution volume'),
-      '2',
-    );
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'Desired amount'),
-      '0.25',
-    );
+      expect(find.text('Create first routine'), findsNothing);
 
-    await tester.ensureVisible(find.text('Calculate'));
-    await tester.tap(find.text('Calculate'));
-    await settleApp();
+      await tester.tap(find.byType(CheckboxListTile));
+      await settleApp();
 
-    expect(find.text('Volume to draw: 0.05 mL'), findsOneWidget);
-  });
-}
+      await tester.tap(find.text('I understand'));
+      await settleApp();
 
-ManagedProtocol _managedProtocol({
-  required String name,
-  required String compoundName,
-}) {
-  final now = DateTime.utc(2026, 6, 5);
-  return ManagedProtocol(
-    protocol: Protocol(
-      id: 'pro-1',
-      compoundId: 'cmp-1',
-      name: name,
-      plannedAmount: 0.25,
-      unitLabel: 'mg',
-      scheduleType: ProtocolScheduleType.everyNDays,
-      intervalDays: 7,
-      reminderMinutesAfterMidnight: 9 * 60,
-      startDate: DateTime.utc(2026, 6, 8),
-      isActive: true,
-      notes: '',
-      createdAt: now,
-      updatedAt: now,
-    ),
-    compound: Compound(
-      id: 'cmp-1',
-      name: compoundName,
-      category: CompoundCategory.glp1,
-      defaultUnit: 'mg',
-      notes: '',
-      isArchived: false,
-      createdAt: now,
-      updatedAt: now,
-    ),
+      expect(find.text('Reminder intro'), findsOneWidget);
+      await tester.tap(find.text('Continue'));
+      await settleApp();
+
+      expect(find.text('Create first routine'), findsOneWidget);
+      expect(
+        find.text(
+          'Create a routine to organize your own schedule and records.',
+        ),
+        findsOneWidget,
+      );
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Protocol name'),
+        'Morning routine',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Compound label'),
+        'Semaglutide',
+      );
+
+      await tester.ensureVisible(find.text('Save routine'));
+      await tester.tap(find.text('Save routine'));
+      await settleApp();
+      await settleApp();
+
+      expect(find.text('Today'), findsWidgets);
+      expect(find.text('Open quick log'), findsOneWidget);
+      expect(
+        find.text('Tap + Log when you want to save a record.'),
+        findsOneWidget,
+      );
+    },
   );
 }
 
 class _InMemoryProtocolsRepository implements ProtocolsRepository {
-  _InMemoryProtocolsRepository({List<ManagedProtocol>? initialItems}) {
-    if (initialItems != null) {
-      _items.addAll(initialItems);
-    }
-  }
-
   final _items = <ManagedProtocol>[];
   final _changes = StreamController<List<ManagedProtocol>>.broadcast();
 
