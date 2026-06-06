@@ -8,14 +8,23 @@ environment:
 
 dependencies:
   cupertino_icons: ^1.0.8
+  drift: ^2.28.1
   equatable: ^2.0.8
   flutter:
     sdk: flutter
   flutter_bloc: ^9.1.1
+  flutter_local_notifications: ^17.2.3
   fpdart: ^1.2.0
+  path: ^1.9.1
+  path_provider: ^2.1.5
+  shared_preferences: ^2.5.3
+  sqlite3_flutter_libs: ^0.5.39
+  timezone: ^0.9.4
 
 dev_dependencies:
   bloc_test: ^10.0.0
+  build_runner: ^2.7.1
+  drift_dev: ^2.28.1
   flutter_test:
     sdk: flutter
   mocktail: ^1.0.5
