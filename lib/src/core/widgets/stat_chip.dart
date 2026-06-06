@@ -26,12 +26,13 @@ class StatChip extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: AppSpacing.xs + 2,
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
       ),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(AppRadii.sm),
+        color: theme.colorScheme.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(AppRadii.md),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -39,10 +40,18 @@ class StatChip extends StatelessWidget {
         children: [
           Text(
             value,
-            style: theme.textTheme.titleLarge?.copyWith(color: accent),
+            style: theme.textTheme.titleLarge?.copyWith(
+              color: accent ?? theme.colorScheme.primary,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 2),
-          Text(label, style: theme.textTheme.bodySmall),
+          Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
         ],
       ),
     );

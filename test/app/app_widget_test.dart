@@ -21,6 +21,9 @@ void main() {
   testWidgets('returning users can open the calculator from the main shell', (
     tester,
   ) async {
+    await tester.binding.setSurfaceSize(const Size(800, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
     SharedPreferences.setMockInitialValues({
       'legal.acceptedDisclaimerVersion': currentDisclaimerVersion,
       'legal.acceptedAt': DateTime.utc(2026, 6, 5).toIso8601String(),

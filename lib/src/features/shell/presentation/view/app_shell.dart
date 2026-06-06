@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:peptide_tracker_app/src/core/design/app_colors.dart';
+import 'package:peptide_tracker_app/src/core/design/app_spacing.dart';
 import 'package:peptide_tracker_app/src/core/reminders/protocol_reminder_schedule.dart';
+import 'package:peptide_tracker_app/src/core/widgets/action_card.dart';
+import 'package:peptide_tracker_app/src/core/widgets/app_bottom_nav.dart';
+import 'package:peptide_tracker_app/src/core/widgets/section_header.dart';
 import 'package:peptide_tracker_app/src/core/widgets/stat_chip.dart';
+import 'package:peptide_tracker_app/src/core/widgets/status_chip.dart';
 import 'package:peptide_tracker_app/src/features/calculator/presentation/view/calculator_page.dart';
 import 'package:peptide_tracker_app/src/features/history/domain/entities/log_entry.dart';
 import 'package:peptide_tracker_app/src/features/history/domain/entities/log_entry_draft.dart';
@@ -53,31 +59,31 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   int _selectedIndex = 0;
 
+  static const _navItems = [
+    AppBottomNavItem(
+      icon: Icons.explore_outlined,
+      selectedIcon: Icons.explore,
+      label: 'Today',
+    ),
+    AppBottomNavItem(
+      icon: Icons.calendar_today_outlined,
+      selectedIcon: Icons.calendar_today,
+      label: 'Protocols',
+    ),
+    AppBottomNavItem(
+      icon: Icons.menu_book_outlined,
+      selectedIcon: Icons.menu_book,
+      label: 'Library',
+    ),
+    AppBottomNavItem(
+      icon: Icons.trending_up_outlined,
+      selectedIcon: Icons.trending_up,
+      label: 'Progress',
+    ),
+  ];
+
   @override
   Widget build(BuildContext context) {
-    const destinations = [
-      NavigationDestination(
-        icon: Icon(Icons.today_outlined),
-        selectedIcon: Icon(Icons.today),
-        label: 'Today',
-      ),
-      NavigationDestination(
-        icon: Icon(Icons.medication_outlined),
-        selectedIcon: Icon(Icons.medication),
-        label: 'Protocols',
-      ),
-      NavigationDestination(
-        icon: Icon(Icons.menu_book_outlined),
-        selectedIcon: Icon(Icons.menu_book),
-        label: 'Library',
-      ),
-      NavigationDestination(
-        icon: Icon(Icons.insights_outlined),
-        selectedIcon: Icon(Icons.insights),
-        label: 'Progress',
-      ),
-    ];
-
     final pages = [
       _TodayPage(
         logEntriesRepository: widget.logEntriesRepository,
@@ -97,18 +103,11 @@ class _AppShellState extends State<AppShell> {
 
     return Scaffold(
       body: IndexedStack(index: _selectedIndex, children: pages),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _openLog,
-        tooltip: 'Log',
-        child: const Icon(Icons.add),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        destinations: destinations,
-        onDestinationSelected: (index) {
-          setState(() => _selectedIndex = index);
-        },
+      bottomNavigationBar: AppBottomNav(
+        items: _navItems,
+        currentIndex: _selectedIndex,
+        onTap: (index) => setState(() => _selectedIndex = index),
+        onLog: _openLog,
       ),
     );
   }
@@ -222,17 +221,17 @@ class _TodayPage extends StatelessWidget {
               final recentEntries = historySnapshot.data ?? const <LogEntry>[];
 
               return ListView(
-                padding: const EdgeInsets.all(16),
+                padding: AppSpacing.screen,
                 children: [
-                  Text('Today', style: theme.textTheme.headlineMedium),
-                  const SizedBox(height: 8),
+                  Text('Today', style: theme.textTheme.displayLarge),
+                  const SizedBox(height: AppSpacing.xxs),
                   Text(
                     _formatDayLabel(currentTime),
-                    style: theme.textTheme.titleMedium,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
-                  const SizedBox(height: 8),
-                  const Text('Tap + Log when you want to save a record.'),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.xl),
                   if (activeProtocols.isEmpty)
                     const Card(
                       child: Padding(
@@ -309,40 +308,56 @@ class _TodayPage extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    Text('Quick actions', style: theme.textTheme.titleMedium),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
+                    const SizedBox(height: AppSpacing.xl),
+                    const SectionHeader(title: 'Quick actions'),
+                    const SizedBox(height: AppSpacing.sm),
+                    Row(
                       children: [
-                        FilledButton.icon(
-                          onPressed: () => _openQuickLogSheet(
-                            context,
-                            activeProtocols: activeProtocols,
-                            initialProtocolId: nextReminder?.item.protocol.id,
-                          ),
-                          icon: const Icon(Icons.add_task_outlined),
-                          label: const Text('Open quick log'),
-                        ),
-                        FilledButton.tonalIcon(
-                          onPressed: () => Navigator.of(context).push(
-                            MaterialPageRoute<void>(
-                              builder: (_) => const CalculatorPage(),
+                        Expanded(
+                          child: ActionCard(
+                            icon: Icons.science_outlined,
+                            label: 'Log Dose',
+                            onTap: () => _openQuickLogSheet(
+                              context,
+                              activeProtocols: activeProtocols,
+                              initialProtocolId:
+                                  nextReminder?.item.protocol.id,
                             ),
                           ),
-                          icon: const Icon(Icons.calculate_outlined),
-                          label: const Text('Calculator'),
                         ),
-                        FilledButton.tonalIcon(
-                          onPressed: onOpenHistory,
-                          icon: const Icon(Icons.insights_outlined),
-                          label: const Text('View all history'),
+                        const SizedBox(width: AppSpacing.cardGap),
+                        Expanded(
+                          child: ActionCard(
+                            icon: Icons.calculate_outlined,
+                            label: 'Calculator',
+                            tone: ActionCardTone.orange,
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => const CalculatorPage(),
+                              ),
+                            ),
+                          ),
                         ),
-                        FilledButton.tonalIcon(
-                          onPressed: onOpenProtocols,
-                          icon: const Icon(Icons.medication_outlined),
-                          label: const Text('Manage routines'),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.cardGap),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ActionCard(
+                            icon: Icons.insights_outlined,
+                            label: 'View History',
+                            onTap: onOpenHistory,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.cardGap),
+                        Expanded(
+                          child: ActionCard(
+                            icon: Icons.list_alt_outlined,
+                            label: 'Manage Protocols',
+                            tone: ActionCardTone.orange,
+                            onTap: onOpenProtocols,
+                          ),
                         ),
                       ],
                     ),
@@ -383,12 +398,13 @@ class _TodayPage extends StatelessWidget {
                               '${entry.item.compound.name} • '
                               '${entry.item.scheduleSummary}',
                             ),
-                            leading: Chip(
-                              label: Text(
-                                entry.scheduledAt.isAfter(currentTime)
-                                    ? 'Later today'
-                                    : 'Due now',
-                              ),
+                            leading: StatusChip(
+                              label: entry.scheduledAt.isAfter(currentTime)
+                                  ? 'Later today'
+                                  : 'Due now',
+                              color: entry.scheduledAt.isAfter(currentTime)
+                                  ? theme.colorScheme.primary
+                                  : AppSemanticColors.of(context).warning,
                             ),
                             trailing: FilledButton(
                               onPressed: () => _openQuickLogSheet(
@@ -711,10 +727,10 @@ class _ProtocolsPage extends StatelessWidget {
           final hasFreeTierLimitReached = activeProtocols.isNotEmpty;
 
           return ListView(
-            padding: const EdgeInsets.all(16),
+            padding: AppSpacing.screen,
             children: [
-              Text('Protocols', style: theme.textTheme.headlineMedium),
-              const SizedBox(height: 8),
+              Text('Protocols', style: theme.textTheme.headlineLarge),
+              const SizedBox(height: AppSpacing.xs),
               if (hasFreeTierLimitReached) ...[
                 Text('${activeProtocols.length} of 1 free routines used'),
                 const SizedBox(height: 8),
@@ -1350,10 +1366,10 @@ class _ProgressPage extends StatelessWidget {
           final theme = Theme.of(context);
 
           return ListView(
-            padding: const EdgeInsets.all(16),
+            padding: AppSpacing.screen,
             children: [
-              Text('History timeline', style: theme.textTheme.headlineMedium),
-              const SizedBox(height: 8),
+              Text('History timeline', style: theme.textTheme.headlineLarge),
+              const SizedBox(height: AppSpacing.xs),
               Text(
                 'Recent saved records appear here so you can confirm what '
                 'was done and when.',

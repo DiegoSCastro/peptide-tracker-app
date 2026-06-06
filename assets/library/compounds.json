@@ -1,0 +1,557 @@
+{
+  "version": 1,
+  "compounds": [
+    {
+      "id": "semaglutide",
+      "name": "Semaglutide",
+      "category": "glp1",
+      "aliases": ["Ozempic", "Wegovy", "Rybelsus"],
+      "summary": "Long-acting GLP-1 receptor agonist with ~7-day half-life; weekly SC injection is the common prescribed cadence.",
+      "whatItIs": "Semaglutide is a modified GLP-1 analog approved for type 2 diabetes and chronic weight management in several regions. Structurally it resembles native GLP-1 with alterations that slow clearance and allow less frequent dosing than first-generation daily agents.",
+      "mechanism": "Activates the GLP-1 receptor, which influences insulin secretion in a glucose-dependent manner, slows gastric emptying, and reduces appetite signaling. It is not insulin and does not replace medical supervision.",
+      "halfLife": "~7 days (subcutaneous injectable)",
+      "tmax": "~1.5 hours after SC injection",
+      "typicalRoutes": ["Subcutaneous (weekly)", "Oral tablet (daily, separate formulation)"],
+      "highlights": [
+        "Once-weekly SC dosing is standard in approved labeling",
+        "Titration schedules start low and increase over weeks",
+        "Steady state often discussed after ~4–5 weeks of weekly use",
+        "Often logged with injection site and weekly weigh-in notes"
+      ],
+      "reportedPatterns": [
+        {
+          "context": "FDA prescribing information — SC (diabetes / weight)",
+          "amountDescription": "0.25 mg → 0.5 mg → 1 mg → up to 2 mg weekly",
+          "frequency": "Once weekly",
+          "notes": "Label describes stepwise titration over 4+ weeks at each step; individual plans vary."
+        },
+        {
+          "context": "FDA prescribing information — oral tablet",
+          "amountDescription": "3 mg → 7 mg → 14 mg daily",
+          "frequency": "Once daily",
+          "notes": "Separate oral formulation (Rybelsus); absorption differs from injectable."
+        }
+      ],
+      "loggingTips": [
+        "Log day/time of injection and any site rotation",
+        "Note titration step when your prescriber changes strength",
+        "Track appetite, nausea, or other observations neutrally"
+      ],
+      "sources": [
+        {"title": "Semaglutide — StatPearls (NCBI Bookshelf)", "reference": "NBK603723"},
+        {"title": "Clinical Pharmacokinetics of Semaglutide — systematic review", "reference": "PMC11215664"}
+      ],
+      "caution": "Prescribing information is for licensed medical use only. This app records what you enter and does not suggest doses or treatment plans."
+    },
+    {
+      "id": "tirzepatide",
+      "name": "Tirzepatide",
+      "category": "glp1",
+      "aliases": ["Mounjaro", "Zepbound"],
+      "summary": "Dual GIP/GLP-1 receptor agonist with ~5-day half-life; weekly SC injection with label-defined titration.",
+      "whatItIs": "Tirzepatide is a once-weekly injectable that activates both GIP and GLP-1 receptors. It is approved for type 2 diabetes and, in some regions, chronic weight management under separate brand names.",
+      "mechanism": "Combines incretin pathway activation (GLP-1) with GIP receptor activity. Effects on glucose and appetite are studied in large trials; individual response varies widely.",
+      "halfLife": "~5 days",
+      "tmax": "Varies by dose; peak exposure within first day after injection",
+      "typicalRoutes": ["Subcutaneous (weekly)"],
+      "highlights": [
+        "Weekly SC administration in approved labeling",
+        "Titration from 2.5 mg upward in 2.5 mg steps",
+        "Missed-dose windows described in product labeling",
+        "Often paired with blood glucose or weight logs"
+      ],
+      "reportedPatterns": [
+        {
+          "context": "FDA prescribing information — initiation",
+          "amountDescription": "2.5 mg weekly for 4 weeks, then 5 mg weekly",
+          "frequency": "Once weekly",
+          "notes": "Initial 2.5 mg phase is for tolerability, not glycemic effect per label."
+        },
+        {
+          "context": "FDA prescribing information — maintenance titration",
+          "amountDescription": "5 mg → 7.5 mg → 10 mg → 12.5 mg → 15 mg weekly",
+          "frequency": "Once weekly",
+          "notes": "Increases of 2.5 mg after ≥4 weeks on current dose when additional effect is needed."
+        }
+      ],
+      "loggingTips": [
+        "Record injection day to keep a consistent weekly rhythm",
+        "Note GI side effects during titration weeks",
+        "Log concurrent medications only as personal reference"
+      ],
+      "sources": [
+        {"title": "Tirzepatide — StatPearls (NCBI Bookshelf)", "reference": "NBK585056"},
+        {"title": "Population PK of tirzepatide", "reference": "CPT Pharmacometrics Syst Pharmacol 2022"}
+      ],
+      "caution": "Not studied for type 1 diabetes in labeling. This tracker does not provide medical advice or dosing guidance."
+    },
+    {
+      "id": "liraglutide",
+      "name": "Liraglutide",
+      "category": "glp1",
+      "aliases": ["Victoza", "Saxenda"],
+      "summary": "Daily GLP-1 agonist with ~13-hour half-life; shorter acting than weekly semaglutide or tirzepatide.",
+      "whatItIs": "Liraglutide is an acylated GLP-1 analog approved for type 2 diabetes and weight management. Its shorter half-life requires daily subcutaneous injection compared with weekly GLP-1 agents.",
+      "mechanism": "GLP-1 receptor activation with albumin binding that extends action to roughly half a day. Appetite and gastric emptying effects are similar in class to other GLP-1 RAs but with a different PK profile.",
+      "halfLife": "~11–15 hours",
+      "tmax": "~8–12 hours",
+      "typicalRoutes": ["Subcutaneous (daily)"],
+      "highlights": [
+        "Daily dosing cadence (unlike weekly semaglutide/tirzepatide)",
+        "Label includes titration from low starting dose",
+        "Useful comparison reference when switching GLP-1 agents",
+        "Log time-of-day for consistency"
+      ],
+      "reportedPatterns": [
+        {
+          "context": "Prescribing information — diabetes (Victoza)",
+          "amountDescription": "0.6 mg → 1.2 mg → 1.8 mg daily",
+          "frequency": "Once daily",
+          "notes": "Start 0.6 mg for 1 week minimum before increasing per label."
+        },
+        {
+          "context": "Prescribing information — weight management (Saxenda)",
+          "amountDescription": "0.6 mg → … → 3 mg daily",
+          "frequency": "Once daily",
+          "notes": "Multi-week titration schedule in label; discontinue if 3 mg not tolerated."
+        }
+      ],
+      "loggingTips": [
+        "Same time each day helps compare appetite notes",
+        "Track pen strength when titrating",
+        "Note injection site if rotating"
+      ],
+      "sources": [
+        {"title": "GLP-1 agonists review — Endocrinology, Diabetes & Metabolism 2024", "reference": "edm2.462"},
+        {"title": "Liraglutide product labeling (FDA)", "reference": "DailyMed"}
+      ],
+      "caution": "Daily GLP-1 agents differ from weekly ones in timing and side-effect profile. Consult your prescriber for any switch."
+    },
+    {
+      "id": "bpc-157",
+      "name": "BPC-157",
+      "category": "recovery",
+      "aliases": ["Body Protection Compound-157", "Pentadecapeptide BPC"],
+      "summary": "15-amino-acid gastric peptide fragment studied mainly in preclinical models; widely discussed for local repair logging.",
+      "whatItIs": "BPC-157 is a synthetic peptide derived from a protective protein found in gastric juice. Most published work is preclinical (rodent models). Human clinical trials for musculoskeletal use are limited; it is not FDA-approved as a drug.",
+      "mechanism": "Preclinical studies describe effects on angiogenesis, nitric oxide pathways, and tendon/ligament healing models. Human mechanism data at therapeutic doses is sparse.",
+      "halfLife": "~4 hours (subcutaneous; community estimates)",
+      "tmax": "Not well characterized in humans",
+      "typicalRoutes": ["Subcutaneous (near injury site or abdomen)", "Oral (gut-focused discussions)"],
+      "highlights": [
+        "Microgram (mcg) amounts dominate community literature",
+        "Often paired with TB-500 in 'Wolverine' stacks",
+        "Preclinical-heavy evidence base",
+        "Log injury site and subjective recovery notes neutrally"
+      ],
+      "reportedPatterns": [
+        {
+          "context": "Community / practitioner literature (not FDA-approved)",
+          "amountDescription": "250–500 mcg",
+          "frequency": "1–2× daily",
+          "notes": "Often injected SC near the area of interest; some split into morning/evening."
+        },
+        {
+          "context": "Combined stack discussions (with TB-500)",
+          "amountDescription": "250–500 mcg BPC-157",
+          "frequency": "Daily during 4–12 week cycles",
+          "notes": "Cycle length varies; breaks between cycles commonly discussed."
+        },
+        {
+          "context": "Oral discussions (gut-focused)",
+          "amountDescription": "250–500 mcg",
+          "frequency": "Once daily",
+          "notes": "Systemic repair discussions usually emphasize injectable routes."
+        }
+      ],
+      "loggingTips": [
+        "Use mcg units consistently in your log",
+        "Note injection site and which side/limb",
+        "Track cycle start/end dates for your own records"
+      ],
+      "sources": [
+        {"title": "BPC-157 preclinical literature — Sikiric group reviews", "reference": "PubMed corpus"},
+        {"title": "Community protocol surveys — r/Peptides / practitioner summaries", "reference": "Anecdotal; not clinical trials"}
+      ],
+      "caution": "Research chemical; purity and legality vary by region. No approved human dose exists. Not medical advice."
+    },
+    {
+      "id": "tb-500",
+      "name": "TB-500",
+      "category": "recovery",
+      "aliases": ["Thymosin Beta-4 fragment", "TB4 fragment"],
+      "summary": "Actin-binding peptide fragment discussed for systemic repair; milligram (mg) weekly amounts in community literature.",
+      "whatItIs": "TB-500 typically refers to a synthetic fragment (often amino acids 17–23) related to thymosin beta-4. It is studied in animal models for wound healing and actin regulation. Not an FDA-approved therapeutic.",
+      "mechanism": "Binds actin and is proposed to support cell migration and angiogenesis in preclinical models. Systemic distribution is a reason it is often paired with locally acting BPC-157 in community protocols.",
+      "halfLife": "~2–3 days (estimated from community PK summaries)",
+      "tmax": "Not established in humans",
+      "typicalRoutes": ["Subcutaneous (abdomen or systemic)"],
+      "highlights": [
+        "Dosed in milligrams, not micrograms (unlike BPC-157)",
+        "Loading + maintenance phases appear in community write-ups",
+        "WADA-prohibited for tested athletes",
+        "Log weekly totals to avoid double-counting"
+      ],
+      "reportedPatterns": [
+        {
+          "context": "Community loading phase (weeks 1–4)",
+          "amountDescription": "2–5 mg",
+          "frequency": "2× weekly",
+          "notes": "Often Mon/Thu split; loading duration 2–4 weeks in write-ups."
+        },
+        {
+          "context": "Community maintenance phase",
+          "amountDescription": "2 mg",
+          "frequency": "Once weekly",
+          "notes": "Reduced after loading in many described cycles."
+        },
+        {
+          "context": "Combined with BPC-157 (same syringe discussions)",
+          "amountDescription": "2.5 mg TB-500 + 250–500 mcg BPC-157",
+          "frequency": "Varies",
+          "notes": "No randomized trial of the combination in humans."
+        }
+      ],
+      "loggingTips": [
+        "Record mg amount and injection day clearly",
+        "Mark loading vs maintenance phase in notes",
+        "Track total weekly mg for your own adherence view"
+      ],
+      "sources": [
+        {"title": "Thymosin beta-4 preclinical literature", "reference": "PubMed"},
+        {"title": "Community stack summaries", "reference": "Practitioner / forum literature"}
+      ],
+      "caution": "Research use only in most jurisdictions. Angiogenesis-related theoretical concerns are discussed in literature — not evaluated by this app."
+    },
+    {
+      "id": "ghk-cu",
+      "name": "GHK-Cu",
+      "category": "recovery",
+      "aliases": ["Copper peptide", "GHK copper"],
+      "summary": "Endogenous copper-binding tripeptide; topical use is well discussed, injectable human data is limited.",
+      "whatItIs": "GHK-Cu (gly-his-lys + copper) is a naturally occurring peptide involved in wound healing and collagen signaling in vitro. Cosmetic topicals are common; systemic injectable use is mostly extrapolated from animal work.",
+      "mechanism": "Modulates gene expression related to extracellular matrix, inflammation, and tissue remodeling in cell and animal models. Copper moiety participates in redox and enzymatic chemistry.",
+      "halfLife": "~0.5–2 hours (peptide component; rodent/extrapolated)",
+      "tmax": "~30–60 min SC in rodent models",
+      "typicalRoutes": ["Topical (cream/serum)", "Subcutaneous (research discussions)"],
+      "highlights": [
+        "Strong topical evidence vs sparse injectable human PK",
+        "Rapid peptide clearance → multiple daily doses in some SC discussions",
+        "Often logged for skin or joint-adjacent protocols",
+        "Distinguish topical from injectable in your records"
+      ],
+      "reportedPatterns": [
+        {
+          "context": "Topical clinical literature",
+          "amountDescription": "0.1–1% cream formulations",
+          "frequency": "1–2× daily",
+          "notes": "Facial skin trials used twice-daily application for 12 weeks."
+        },
+        {
+          "context": "Community injectable discussions (no human trials)",
+          "amountDescription": "1–4 mg",
+          "frequency": "Daily or divided",
+          "notes": "Extrapolated from rodent mg/kg; not validated in controlled human studies."
+        }
+      ],
+      "loggingTips": [
+        "Tag route (topical vs injectable) in notes",
+        "For SC logs, record mg and time of day",
+        "Cycle length (4–8 weeks) often noted in community write-ups"
+      ],
+      "sources": [
+        {"title": "GHK-Cu wound healing — Pickart & colleagues", "reference": "PubMed"},
+        {"title": "Topical facial skin trials — Leyden et al.", "reference": "PMID literature"}
+      ],
+      "caution": "Injectable human dosing is not established in published trials. Copper balance matters — this app does not assess safety."
+    },
+    {
+      "id": "sermorelin",
+      "name": "Sermorelin",
+      "category": "ghrh_ghrp",
+      "aliases": ["Geref", "GHRH(1-29)"],
+      "summary": "Short-acting GHRH analog; ~10–20 min half-life; pulsatile GH stimulation.",
+      "whatItIs": "Sermorelin is the first 29 amino acids of growth hormone-releasing hormone. It was FDA-approved (Geref) for pediatric GH deficiency testing/therapy but was discontinued commercially in the US. Compounded forms appear in longevity clinics.",
+      "mechanism": "Binds GHRH receptors on pituitary somatotrophs to stimulate endogenous GH release in a pulse. Does not contain exogenous GH.",
+      "halfLife": "~10–20 minutes",
+      "tmax": "Minutes after SC injection",
+      "typicalRoutes": ["Subcutaneous"],
+      "highlights": [
+        "Very short half-life → multiple daily or nightly doses in practice",
+        "Often combined with a GHRP (e.g. ipamorelin) in write-ups",
+        "Historical FDA product vs modern compounded supply",
+        "Log timing relative to sleep or fasted state if you track that"
+      ],
+      "reportedPatterns": [
+        {
+          "context": "Historical prescribing (Geref) / clinic literature",
+          "amountDescription": "200–500 mcg",
+          "frequency": "Once nightly or 2–3× daily",
+          "notes": "Night dosing aligns with natural nocturnal GH pulse in some protocols."
+        },
+        {
+          "context": "Combined with ipamorelin (community/clinic)",
+          "amountDescription": "100–300 mcg each peptide",
+          "frequency": "1–3× daily",
+          "notes": "Synergy is theoretical; monitor for flushing or water retention."
+        }
+      ],
+      "loggingTips": [
+        "Record mcg and time; short half-life makes timing meaningful",
+        "Note sleep quality or fasting state neutrally",
+        "Track 'on/off' cycle weeks if you use them"
+      ],
+      "sources": [
+        {"title": "Sermorelin — Geref prescribing history", "reference": "FDA archives"},
+        {"title": "GHRH analog comparisons", "reference": "Endocrine reviews / StatPearls"}
+      ],
+      "caution": "GH axis modulation has endocrine implications. Not for unsupervised use. Tracker only."
+    },
+    {
+      "id": "cjc-1295-no-dac",
+      "name": "CJC-1295 (no DAC)",
+      "category": "ghrh_ghrp",
+      "aliases": ["Mod GRF 1-29", "Modified GRF 1-29"],
+      "summary": "Modified GHRH analog without albumin binding; ~30 min half-life; common stack partner for ipamorelin.",
+      "whatItIs": "CJC-1295 without the Drug Affinity Complex (DAC) is a shortened, modified GHRH analog designed for a brief GH-releasing pulse. It is sold as a research peptide and is not FDA-approved for general use.",
+      "mechanism": "GHRH receptor agonism with four amino-acid substitutions vs native GHRH(1-29), extending action slightly vs sermorelin while staying pulsatile.",
+      "halfLife": "~30 minutes",
+      "tmax": "Minutes after injection",
+      "typicalRoutes": ["Subcutaneous"],
+      "highlights": [
+        "Preferred over DAC version when pulsatility is desired",
+        "Typical stack: equal mcg with ipamorelin",
+        "2–3× daily timing in community protocols",
+        "Do not confuse mcg (GHRH) with mg (TB-500) units"
+      ],
+      "reportedPatterns": [
+        {
+          "context": "Community / research stack literature",
+          "amountDescription": "100–300 mcg",
+          "frequency": "2–3× daily",
+          "notes": "Often morning + pre-bed; fasted state discussed."
+        },
+        {
+          "context": "CJC + ipamorelin combo (same syringe)",
+          "amountDescription": "100 mcg + 100 mcg",
+          "frequency": "2–3× daily",
+          "notes": "Most common ratio in written protocols; individual variation is wide."
+        }
+      ],
+      "loggingTips": [
+        "Log each injection time separately for short half-life agents",
+        "Note if taken with ipamorelin in same entry",
+        "Track cycle breaks (e.g. 5 on / 2 off) in notes"
+      ],
+      "sources": [
+        {"title": "CJC-1295 vs ipamorelin PK summaries", "reference": "Research peptide literature"},
+        {"title": "GHRH analog review", "reference": "Baltic BioLabs research summary"}
+      ],
+      "caution": "Research peptide. GH/IGF-1 effects vary. Not a dose recommendation from this app."
+    },
+    {
+      "id": "cjc-1295-dac",
+      "name": "CJC-1295 (with DAC)",
+      "category": "ghrh_ghrp",
+      "aliases": ["CJC-1295 DAC", "Long-acting CJC"],
+      "summary": "Albumin-binding GHRH analog with multi-day half-life; sustained GH elevation vs pulsatile protocols.",
+      "whatItIs": "The DAC (Drug Affinity Complex) variant binds serum albumin, extending circulation time to roughly a week. This produces sustained GH/IGF-1 exposure rather than discrete pulses — a different pharmacologic profile from Mod GRF 1-29.",
+      "mechanism": "Same GHRH receptor target as other analogs, but prolonged exposure from albumin binding alters the pulsatility pattern that pituitary physiology normally uses.",
+      "halfLife": "~6–8 days",
+      "tmax": "Multi-day exposure plateau",
+      "typicalRoutes": ["Subcutaneous"],
+      "highlights": [
+        "Weekly or twice-weekly injection schedules in write-ups",
+        "Different profile from no-DAC + ipamorelin stacks",
+        "Long washout if side effects occur",
+        "Log injection day and any water retention notes"
+      ],
+      "reportedPatterns": [
+        {
+          "context": "Community long-acting protocols",
+          "amountDescription": "1–2 mg",
+          "frequency": "Once or twice weekly",
+          "notes": "Less common than no-DAC in modern stack discussions."
+        },
+        {
+          "context": "Animal PK literature (human extrapolation)",
+          "amountDescription": "30–60 µg/kg weekly equivalent",
+          "frequency": "Weekly",
+          "notes": "Rodent/human PK papers describe prolonged IGF-1 elevation."
+        }
+      ],
+      "loggingTips": [
+        "Weekly cadence — set a recurring reminder day",
+        "Note any prolonged side effects given long half-life",
+        "Separate log entry from daily GHRP stacks"
+      ],
+      "sources": [
+        {"title": "CJC-1295 DAC PK — Teichman et al.", "reference": "J Clin Endocrinol Metab 2006"},
+        {"title": "GHRH peptide comparisons", "reference": "Remy Peptides research summary"}
+      ],
+      "caution": "Sustained GH elevation differs from pulsatile protocols. Medical supervision is essential if used clinically."
+    },
+    {
+      "id": "ipamorelin",
+      "name": "Ipamorelin",
+      "category": "ghrh_ghrp",
+      "aliases": ["IPA"],
+      "summary": "Selective ghrelin/GHS-R agonist; ~2 h half-life; often stacked with Mod GRF 1-29.",
+      "whatItIs": "Ipamorelin is a pentapeptide growth hormone secretagogue described as more selective than older GHRPs (less cortisol/prolactin release in animal models). Sold as research material; not FDA-approved for OTC use.",
+      "mechanism": "Activates GHS-R1a (ghrelin receptor) on pituitary to trigger a GH pulse. Works synergistically with GHRH-class peptides in combined protocols.",
+      "halfLife": "~2 hours",
+      "tmax": "~30–45 minutes",
+      "typicalRoutes": ["Subcutaneous"],
+      "highlights": [
+        "mcg dosing; often 100–300 mcg per injection",
+        "Pairs with CJC-1295 no DAC or sermorelin",
+        "2–3× daily timing common in literature",
+        "Log hunger or flushing neutrally post-injection"
+      ],
+      "reportedPatterns": [
+        {
+          "context": "Community / clinic stack literature",
+          "amountDescription": "200–300 mcg",
+          "frequency": "1–2× daily",
+          "notes": "Pre-bed dose aligns with nocturnal GH discussions."
+        },
+        {
+          "context": "CJC-1295 (no DAC) combo",
+          "amountDescription": "100 mcg ipamorelin + 100 mcg Mod GRF",
+          "frequency": "2–3× daily",
+          "notes": "Same syringe administration often described."
+        }
+      ],
+      "loggingTips": [
+        "Use mcg in amount field consistently",
+        "Note stacked peptides in the same log entry",
+        "Track cycle breaks to mirror your own schedule"
+      ],
+      "sources": [
+        {"title": "Ipamorelin selectivity — Raun et al.", "reference": "Eur J Endocrinol 1998"},
+        {"title": "GH secretagogue comparisons", "reference": "TelePeptide / research summaries"}
+      ],
+      "caution": "GH axis effects are individual. Research peptide purity varies. Not medical guidance."
+    },
+    {
+      "id": "tesamorelin",
+      "name": "Tesamorelin",
+      "category": "ghrh_ghrp",
+      "aliases": ["Egrifta"],
+      "summary": "FDA-approved GHRH analog (1-44) for HIV-associated lipodystrophy; daily SC dosing in labeling.",
+      "whatItIs": "Tesamorelin is a stabilized GHRH(1-44) analog with an N-terminal modification that reduces enzymatic degradation. Unlike research CJC variants, it has an approved indication with defined labeling.",
+      "mechanism": "GHRH receptor activation with longer exposure than native GHRH fragments. Approved use is specific to visceral adipose reduction in HIV lipodystrophy — not a general wellness indication.",
+      "halfLife": "~26–38 minutes (SC)",
+      "tmax": "~0.5 hours",
+      "typicalRoutes": ["Subcutaneous (daily)"],
+      "highlights": [
+        "Rare example of FDA-approved injectable GHRH analog",
+        "Daily dosing in approved labeling",
+        "Distinct indication vs cosmetic GH use",
+        "Log as daily mcg/mg per your prescription label"
+      ],
+      "reportedPatterns": [
+        {
+          "context": "FDA prescribing information (Egrifta)",
+          "amountDescription": "2 mg",
+          "frequency": "Once daily",
+          "notes": "Indication-specific; not generalized to other populations in labeling."
+        }
+      ],
+      "loggingTips": [
+        "Record daily injection time",
+        "Note indication context in private notes if helpful",
+        "Track abdominal measurements only as personal data"
+      ],
+      "sources": [
+        {"title": "Tesamorelin — FDA label (Egrifta)", "reference": "DailyMed"},
+        {"title": "GHRH peptide comparison", "reference": "Remy Peptides research"}
+      ],
+      "caution": "Approved only for specific HIV-associated lipodystrophy. Off-label context is not endorsed by this app."
+    },
+    {
+      "id": "aod-9604",
+      "name": "AOD-9604",
+      "category": "metabolic",
+      "aliases": ["hGH fragment 176-191"],
+      "summary": "GH fragment peptide studied for lipolysis in models; microgram daily amounts in community literature.",
+      "whatItIs": "AOD-9604 is a modified fragment of human growth hormone (amino acids 176–191) marketed in research channels for metabolic effects. It does not raise IGF-1 like full GH secretagogues in some preclinical descriptions.",
+      "mechanism": "Proposed to stimulate lipolysis without full GH axis activation in animal models. Human efficacy data is limited and inconsistent.",
+      "halfLife": "Short (minutes to ~1 h; fragment peptides)",
+      "tmax": "Not well established",
+      "typicalRoutes": ["Subcutaneous", "Oral (discussed)"],
+      "highlights": [
+        "mcg-range dosing in community write-ups",
+        "Often morning fasted injection timing discussed",
+        "Distinct from GH secretagogue stacks",
+        "Log separately from GHRH/GHRP protocols"
+      ],
+      "reportedPatterns": [
+        {
+          "context": "Community metabolic protocols",
+          "amountDescription": "250–500 mcg",
+          "frequency": "Once daily (morning)",
+          "notes": "Fasted state often mentioned; evidence base is weak."
+        },
+        {
+          "context": "Extended community cycles",
+          "amountDescription": "250 mcg",
+          "frequency": "Daily for 4–12 weeks",
+          "notes": "Break periods between cycles commonly described."
+        }
+      ],
+      "loggingTips": [
+        "Use mcg units",
+        "Note fasting state if you track it",
+        "Keep separate from GH stack logs for clarity"
+      ],
+      "sources": [
+        {"title": "hGH fragment 176-191 preclinical literature", "reference": "PubMed"},
+        {"title": "Community protocol summaries", "reference": "Forum / vendor literature"}
+      ],
+      "caution": "Not FDA-approved. Weight-related claims in marketing exceed published human evidence."
+    },
+    {
+      "id": "mots-c",
+      "name": "MOTS-c",
+      "category": "metabolic",
+      "aliases": ["Mitochondrial ORF peptide"],
+      "summary": "Mitochondrial-derived peptide discussed for metabolic exercise mimetic effects; emerging human data.",
+      "whatItIs": "MOTS-c is a 16-amino-acid peptide encoded in mitochondrial DNA. Research explores roles in glucose metabolism, exercise response, and aging models. Injectable use in humans is mostly early-stage.",
+      "mechanism": "Activates AMPK-related pathways in cell and animal models, influencing glucose uptake and fatty acid oxidation. Mechanism in humans at injectable doses is still being studied.",
+      "halfLife": "~25–30 minutes (early human PK summaries)",
+      "tmax": "Minutes after SC injection",
+      "typicalRoutes": ["Subcutaneous"],
+      "highlights": [
+        "mg-range weekly or biweekly patterns in early discussions",
+        "Metabolic logging pairs well with exercise notes",
+        "Distinct from GLP-1 class agents",
+        "Evidence still evolving — attribute carefully"
+      ],
+      "reportedPatterns": [
+        {
+          "context": "Early human / community literature",
+          "amountDescription": "5–15 mg",
+          "frequency": "1–3× weekly",
+          "notes": "Wide variance; some protocols use short 2–4 week courses."
+        },
+        {
+          "context": "Research exercise-mimetic discussions",
+          "amountDescription": "10 mg",
+          "frequency": "Weekly",
+          "notes": "Often combined with training logs rather than daily dosing."
+        }
+      ],
+      "loggingTips": [
+        "Log mg amount and weekly injection day",
+        "Note training sessions on the same day if relevant",
+        "Track energy or glucose readings only as personal notes"
+      ],
+      "sources": [
+        {"title": "MOTS-c discovery — Lee et al., Cell Metabolism 2015", "reference": "PMID 25738459"},
+        {"title": "Mitochondrial peptide reviews", "reference": "Nature Reviews Endocrinology summaries"}
+      ],
+      "caution": "Human therapeutic use is experimental. Not a substitute for medical metabolic care."
+    }
+  ]
+}

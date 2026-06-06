@@ -25,6 +25,9 @@ void main() {
     required ProtocolsRepository protocolsRepository,
     required LogEntriesRepository logEntriesRepository,
   }) async {
+    await tester.binding.setSurfaceSize(const Size(800, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
     SharedPreferences.setMockInitialValues({
       'legal.acceptedDisclaimerVersion': currentDisclaimerVersion,
       'legal.acceptedAt': DateTime.utc(2026, 6, 5).toIso8601String(),
@@ -62,9 +65,10 @@ void main() {
     );
 
     expect(find.text('Today'), findsWidgets);
-    expect(find.text('Open quick log'), findsOneWidget);
+    expect(find.text('Log Dose'), findsOneWidget);
 
-    await tester.tap(find.text('Open quick log'));
+    await tester.ensureVisible(find.text('Log Dose'));
+    await tester.tap(find.text('Log Dose'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
 
@@ -132,10 +136,11 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
 
     expect(find.text('Quick actions'), findsOneWidget);
-    expect(find.text('Open quick log'), findsOneWidget);
-    expect(find.text('View all history'), findsOneWidget);
+    expect(find.text('Log Dose'), findsOneWidget);
+    expect(find.text('View History'), findsOneWidget);
 
-    await tester.tap(find.text('View all history'));
+    await tester.ensureVisible(find.text('View History'));
+    await tester.tap(find.text('View History'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
 
@@ -146,7 +151,8 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
 
-    await tester.tap(find.text('Open quick log'));
+    await tester.ensureVisible(find.text('Log Dose'));
+    await tester.tap(find.text('Log Dose'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
     expect(find.text('Save log'), findsOneWidget);

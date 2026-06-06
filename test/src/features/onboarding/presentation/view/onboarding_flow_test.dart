@@ -89,11 +89,8 @@ void main() {
       await settleApp();
 
       expect(find.text('Today'), findsWidgets);
-      expect(find.text('Open quick log'), findsOneWidget);
-      expect(
-        find.text('Tap + Log when you want to save a record.'),
-        findsOneWidget,
-      );
+      expect(find.text('Log Dose'), findsOneWidget);
+      expect(find.text('Quick actions'), findsOneWidget);
     },
   );
 }
