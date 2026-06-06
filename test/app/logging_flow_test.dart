@@ -88,11 +88,11 @@ void main() {
     expect(find.text('Logged Morning routine'), findsOneWidget);
     expect(find.text('Logged before breakfast'), findsWidgets);
 
-    await tester.tap(find.text('History').last);
+    await tester.tap(find.text('Progress').last);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
 
-    expect(find.text('History'), findsWidgets);
+    expect(find.text('History timeline'), findsWidgets);
     expect(find.text('Morning routine'), findsOneWidget);
     expect(find.text('Semaglutide • Done • 0.25 mg'), findsOneWidget);
     expect(find.text('Logged before breakfast'), findsOneWidget);
@@ -261,7 +261,7 @@ class _InMemoryLogEntriesRepository implements LogEntriesRepository {
       );
       _changes.add(List.unmodifiable(_entries));
       return unit;
-    }, (_, __) => const StorageFailure());
+    }, (_, _) => const StorageFailure());
   }
 
   @override

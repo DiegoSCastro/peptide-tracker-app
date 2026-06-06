@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:peptide_tracker_app/src/core/database/app_database.dart';
+import 'package:peptide_tracker_app/src/core/design/app_theme.dart';
 import 'package:peptide_tracker_app/src/core/notifications/notification_gateway.dart';
 import 'package:peptide_tracker_app/src/core/notifications/protocol_reminder_scheduler.dart';
 import 'package:peptide_tracker_app/src/features/history/data/repositories/drift_log_entries_repository.dart';
@@ -11,6 +12,7 @@ import 'package:peptide_tracker_app/src/features/onboarding/presentation/view/on
 import 'package:peptide_tracker_app/src/features/protocols/data/repositories/drift_protocols_repository.dart';
 import 'package:peptide_tracker_app/src/features/protocols/domain/entities/managed_protocol.dart';
 import 'package:peptide_tracker_app/src/features/protocols/domain/repositories/protocols_repository.dart';
+import 'package:peptide_tracker_app/src/features/settings/data/appearance_preferences.dart';
 import 'package:peptide_tracker_app/src/features/shell/presentation/view/app_shell.dart';
 
 /// Root application widget.
@@ -35,10 +37,13 @@ class App extends StatefulWidget {
   /// Optional protocols repository override used by tests.
   final ProtocolsRepository? protocolsRepository;
 
+  /// Optional log entries repository override used by tests.
   final LogEntriesRepository? logEntriesRepository;
 
+  /// Optional notification gateway override used by tests.
   final NotificationGateway notificationGateway;
 
+  /// Optional now function override used by tests.
   final DateTime Function() now;
 
   @override
@@ -58,8 +63,12 @@ class _AppState extends State<App> {
   late final ProtocolReminderScheduler _reminderScheduler =
       ProtocolReminderScheduler(gateway: widget.notificationGateway);
 
+  static const AppearancePreferences _appearancePreferences =
+      AppearancePreferences();
+
   StreamSubscription<List<ManagedProtocol>>? _protocolSubscription;
   late Future<_BootstrapState> _bootstrapFuture = _loadBootstrapState();
+  ThemeMode _themeMode = ThemeMode.system;
 
   @override
   void initState() {
@@ -73,6 +82,20 @@ class _AppState extends State<App> {
       ),
     );
     unawaited(widget.notificationGateway.initialize());
+    unawaited(_loadThemeMode());
+  }
+
+  Future<void> _loadThemeMode() async {
+    final mode = await _appearancePreferences.load();
+    if (!mounted) {
+      return;
+    }
+    setState(() => _themeMode = mode);
+  }
+
+  void _updateThemeMode(ThemeMode mode) {
+    setState(() => _themeMode = mode);
+    unawaited(_appearancePreferences.save(mode));
   }
 
   @override
@@ -80,14 +103,9 @@ class _AppState extends State<App> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Peptide Tracker',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF2E5BFF),
-          brightness: Brightness.dark,
-        ),
-        scaffoldBackgroundColor: const Color(0xFF0B1020),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: _themeMode,
       home: FutureBuilder<_BootstrapState>(
         future: _bootstrapFuture,
         builder: (context, snapshot) {
@@ -113,6 +131,8 @@ class _AppState extends State<App> {
             logEntriesRepository: _logEntriesRepository,
             protocolsRepository: _protocolsRepository,
             now: widget.now,
+            themeMode: _themeMode,
+            onThemeModeChanged: _updateThemeMode,
           );
         },
       ),

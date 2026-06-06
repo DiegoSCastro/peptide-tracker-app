@@ -10,9 +10,12 @@ import 'package:peptide_tracker_app/src/features/protocols/domain/entities/proto
 import 'package:peptide_tracker_app/src/features/protocols/domain/entities/protocol_schedule_type.dart';
 import 'package:peptide_tracker_app/src/features/protocols/domain/repositories/protocols_repository.dart';
 
+/// Drift-backed implementation of [ProtocolsRepository].
 class DriftProtocolsRepository implements ProtocolsRepository {
+  /// Creates the repository with the given database.
   const DriftProtocolsRepository({required this.database});
 
+  /// Local database used for persistence.
   final AppDatabase database;
 
   @override

@@ -15,7 +15,7 @@ import 'package:peptide_tracker_app/src/features/protocols/domain/entities/proto
 import 'package:peptide_tracker_app/src/features/protocols/domain/repositories/protocols_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'test_support/noop_log_entries_repository.dart';
+import '../test_support/noop_log_entries_repository.dart';
 
 void main() {
   testWidgets('returning users can open the calculator from the main shell', (
@@ -49,6 +49,7 @@ void main() {
 
     expect(find.text('Today'), findsWidgets);
 
+    await tester.ensureVisible(find.text('Calculator').last);
     await tester.tap(find.text('Calculator').last);
     await settleApp();
 
@@ -173,7 +174,7 @@ class _InMemoryProtocolsRepository implements ProtocolsRepository {
       }
       _changes.add(List.unmodifiable(_items));
       return unit;
-    }, (_, __) => const StorageFailure());
+    }, (_, _) => const StorageFailure());
   }
 
   @override
@@ -182,7 +183,7 @@ class _InMemoryProtocolsRepository implements ProtocolsRepository {
       _items.removeWhere((entry) => entry.protocol.id == protocolId);
       _changes.add(List.unmodifiable(_items));
       return unit;
-    }, (_, __) => const StorageFailure());
+    }, (_, _) => const StorageFailure());
   }
 
   @override

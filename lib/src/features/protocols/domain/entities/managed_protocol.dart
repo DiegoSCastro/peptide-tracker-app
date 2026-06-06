@@ -4,12 +4,18 @@ import 'package:peptide_tracker_app/src/features/protocols/domain/entities/proto
 import 'package:peptide_tracker_app/src/features/protocols/domain/entities/protocol_editor_draft.dart';
 import 'package:peptide_tracker_app/src/features/protocols/domain/entities/protocol_schedule_type.dart';
 
+/// A protocol paired with its linked compound.
 class ManagedProtocol extends Equatable {
+  /// Creates a managed protocol.
   const ManagedProtocol({required this.protocol, required this.compound});
 
+  /// The persisted protocol.
   final Protocol protocol;
+
+  /// The compound linked to the protocol.
   final Compound compound;
 
+  /// Converts the managed protocol into an editor draft.
   ProtocolEditorDraft toEditorDraft() {
     return ProtocolEditorDraft(
       protocolId: protocol.id,
@@ -28,6 +34,7 @@ class ManagedProtocol extends Equatable {
     );
   }
 
+  /// Short summary of the protocol schedule for list views.
   String get scheduleSummary {
     return switch (protocol.scheduleType) {
       ProtocolScheduleType.everyNDays =>

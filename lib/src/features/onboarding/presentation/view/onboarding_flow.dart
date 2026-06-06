@@ -6,7 +6,9 @@ import 'package:peptide_tracker_app/src/features/protocols/domain/entities/proto
 import 'package:peptide_tracker_app/src/features/protocols/domain/entities/protocol_schedule_type.dart';
 import 'package:peptide_tracker_app/src/features/protocols/domain/repositories/protocols_repository.dart';
 
+/// First-run onboarding flow for disclaimer, notifications, and setup.
 class OnboardingFlow extends StatefulWidget {
+  /// Creates the onboarding flow.
   const OnboardingFlow({
     required this.hasExistingProtocols,
     required this.launchRepository,
@@ -16,10 +18,19 @@ class OnboardingFlow extends StatefulWidget {
     super.key,
   });
 
+  /// Whether the user already has saved protocols.
   final bool hasExistingProtocols;
+
+  /// Repository used to persist onboarding progress.
   final AppLaunchRepository launchRepository;
+
+  /// Repository used to save the first routine.
   final ProtocolsRepository protocolsRepository;
+
+  /// Callback that requests notification permissions.
   final Future<void> Function() requestNotificationPermissions;
+
+  /// Callback invoked when onboarding completes successfully.
   final Future<void> Function() onCompleted;
 
   @override

@@ -7,9 +7,12 @@ import 'package:peptide_tracker_app/src/features/history/domain/entities/log_ent
 import 'package:peptide_tracker_app/src/features/history/domain/entities/log_entry_status.dart';
 import 'package:peptide_tracker_app/src/features/history/domain/repositories/log_entries_repository.dart';
 
+/// Drift-backed implementation of [LogEntriesRepository].
 class DriftLogEntriesRepository implements LogEntriesRepository {
+  /// Creates the repository with the given database.
   const DriftLogEntriesRepository({required this.database});
 
+  /// Local database used for persistence.
   final AppDatabase database;
 
   @override

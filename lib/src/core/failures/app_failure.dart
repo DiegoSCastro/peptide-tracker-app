@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 /// Base failure for app-level errors.
-sealed class AppFailure extends Equatable {
+sealed class AppFailure extends Equatable implements Exception {
   /// Creates an app failure.
   const AppFailure(this.message);
 

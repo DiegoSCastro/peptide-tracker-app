@@ -2,10 +2,10 @@ import 'package:equatable/equatable.dart';
 import 'package:peptide_tracker_app/src/features/protocols/domain/entities/compound_category.dart';
 import 'package:peptide_tracker_app/src/features/protocols/domain/entities/protocol_schedule_type.dart';
 
+/// Mutable form state for creating or editing a protocol.
 class ProtocolEditorDraft extends Equatable {
+  /// Creates a protocol editor draft.
   const ProtocolEditorDraft({
-    this.protocolId,
-    this.compoundId,
     required this.protocolName,
     required this.compoundName,
     required this.compoundCategory,
@@ -17,8 +17,11 @@ class ProtocolEditorDraft extends Equatable {
     required this.startDate,
     required this.isActive,
     required this.notes,
+    this.protocolId,
+    this.compoundId,
   });
 
+  /// Returns a draft with sensible defaults for a new routine.
   factory ProtocolEditorDraft.initial() {
     return ProtocolEditorDraft(
       protocolName: '',
@@ -35,20 +38,46 @@ class ProtocolEditorDraft extends Equatable {
     );
   }
 
+  /// Existing protocol identifier when editing.
   final String? protocolId;
+
+  /// Existing compound identifier when editing.
   final String? compoundId;
+
+  /// Display name of the routine.
   final String protocolName;
+
+  /// Display name of the compound.
   final String compoundName;
+
+  /// Category selected for the compound.
   final CompoundCategory compoundCategory;
+
+  /// Unit label for planned doses.
   final String unitLabel;
+
+  /// Planned dose amount, if configured.
   final double? plannedAmount;
+
+  /// Schedule type for reminders and due-date logic.
   final ProtocolScheduleType scheduleType;
+
+  /// Interval in days for repeating schedules.
   final int? intervalDays;
+
+  /// Reminder offset in minutes after midnight.
   final int? reminderMinutesAfterMidnight;
+
+  /// UTC date when the routine starts.
   final DateTime startDate;
+
+  /// Whether the routine should be active after saving.
   final bool isActive;
+
+  /// Optional free-form notes.
   final String notes;
 
+  /// Returns a copy with the given fields replaced.
   ProtocolEditorDraft copyWith({
     String? protocolId,
     String? compoundId,

@@ -11,7 +11,7 @@ void main() {
       final scheduler = ProtocolReminderScheduler(gateway: gateway);
 
       await scheduler.syncProtocols([
-        _protocol(startDate: DateTime.utc(2026, 6, 1)),
+        _protocol(startDate: DateTime.utc(2026, 6)),
       ], now: DateTime(2026, 6, 8, 8));
 
       expect(gateway.scheduled, hasLength(8));
@@ -30,11 +30,11 @@ void main() {
         final scheduler = ProtocolReminderScheduler(gateway: gateway);
 
         await scheduler.syncProtocols([
-          _protocol(startDate: DateTime.utc(2026, 6, 1)),
+          _protocol(startDate: DateTime.utc(2026, 6)),
         ], now: DateTime(2026, 6, 8, 8));
         await scheduler.syncProtocols([
           _protocol(
-            startDate: DateTime.utc(2026, 6, 1),
+            startDate: DateTime.utc(2026, 6),
             isActive: false,
           ),
         ], now: DateTime(2026, 6, 8, 8));

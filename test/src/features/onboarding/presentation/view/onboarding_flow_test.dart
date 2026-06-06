@@ -5,22 +5,19 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:peptide_tracker_app/app/app.dart';
 import 'package:peptide_tracker_app/src/core/failures/app_failure.dart';
-import 'package:peptide_tracker_app/src/features/onboarding/data/app_launch_repository.dart';
-import 'package:peptide_tracker_app/src/features/onboarding/domain/protocol_draft.dart';
 import 'package:peptide_tracker_app/src/features/protocols/domain/entities/compound.dart';
-import 'package:peptide_tracker_app/src/features/protocols/domain/entities/compound_category.dart';
 import 'package:peptide_tracker_app/src/features/protocols/domain/entities/managed_protocol.dart';
 import 'package:peptide_tracker_app/src/features/protocols/domain/entities/protocol.dart';
 import 'package:peptide_tracker_app/src/features/protocols/domain/entities/protocol_editor_draft.dart';
-import 'package:peptide_tracker_app/src/features/protocols/domain/entities/protocol_schedule_type.dart';
 import 'package:peptide_tracker_app/src/features/protocols/domain/repositories/protocols_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'test_support/noop_log_entries_repository.dart';
+import '../../../../../test_support/noop_log_entries_repository.dart';
 
 void main() {
   testWidgets(
-    'requires explicit disclaimer acceptance before creating the first protocol',
+    'requires explicit disclaimer acceptance before creating the first'
+    ' protocol',
     (tester) async {
       SharedPreferences.setMockInitialValues({});
       final repository = _InMemoryProtocolsRepository();
@@ -158,7 +155,7 @@ class _InMemoryProtocolsRepository implements ProtocolsRepository {
       }
       _changes.add(List.unmodifiable(_items));
       return unit;
-    }, (_, __) => const StorageFailure());
+    }, (_, _) => const StorageFailure());
   }
 
   @override
@@ -167,7 +164,7 @@ class _InMemoryProtocolsRepository implements ProtocolsRepository {
       _items.removeWhere((entry) => entry.protocol.id == protocolId);
       _changes.add(List.unmodifiable(_items));
       return unit;
-    }, (_, __) => const StorageFailure());
+    }, (_, _) => const StorageFailure());
   }
 
   @override

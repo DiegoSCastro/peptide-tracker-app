@@ -4,7 +4,9 @@ import 'package:peptide_tracker_app/src/core/notifications/notification_gateway.
 import 'package:timezone/data/latest.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
+/// Notification gateway backed by flutter_local_notifications.
 class FlutterLocalNotificationGateway implements NotificationGateway {
+  /// Creates the gateway with a default plugin instance.
   FlutterLocalNotificationGateway()
     : _plugin = FlutterLocalNotificationsPlugin();
 
@@ -63,7 +65,7 @@ class FlutterLocalNotificationGateway implements NotificationGateway {
     return androidAllowed ??
         iosAllowed ??
         macosAllowed ??
-        !defaultTargetPlatform.name.isEmpty;
+        defaultTargetPlatform.name.isNotEmpty;
   }
 
   @override

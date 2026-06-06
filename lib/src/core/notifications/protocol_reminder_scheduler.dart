@@ -2,15 +2,21 @@ import 'package:peptide_tracker_app/src/core/notifications/notification_gateway.
 import 'package:peptide_tracker_app/src/core/reminders/protocol_reminder_schedule.dart';
 import 'package:peptide_tracker_app/src/features/protocols/domain/entities/protocol.dart';
 
+/// Syncs local notifications with upcoming protocol reminders.
 class ProtocolReminderScheduler {
+  /// Creates a scheduler with the given gateway and slot count.
   const ProtocolReminderScheduler({
     required this.gateway,
     this.slotsPerProtocol = 8,
   });
 
+  /// Gateway used to schedule and cancel notifications.
   final NotificationGateway gateway;
+
+  /// Number of reminder slots reserved per protocol.
   final int slotsPerProtocol;
 
+  /// Schedules upcoming reminders and clears stale slots.
   Future<void> syncProtocols(
     Iterable<Protocol> protocols, {
     DateTime? now,

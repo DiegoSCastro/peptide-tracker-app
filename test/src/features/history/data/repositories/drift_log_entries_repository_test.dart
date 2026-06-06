@@ -49,7 +49,7 @@ void main() {
             .create(
               LogEntryDraft(
                 protocolId: protocolId,
-                loggedAt: DateTime.utc(2026, 6, 15, 9, 0),
+                loggedAt: DateTime.utc(2026, 6, 15, 9),
                 amount: 0.25,
                 status: LogEntryStatus.skipped,
                 note: '',

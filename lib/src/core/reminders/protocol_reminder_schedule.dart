@@ -1,9 +1,11 @@
 import 'package:peptide_tracker_app/src/features/protocols/domain/entities/protocol.dart';
 import 'package:peptide_tracker_app/src/features/protocols/domain/entities/protocol_schedule_type.dart';
 
+/// Computes due dates and upcoming reminder times for protocols.
 class ProtocolReminderSchedule {
   const ProtocolReminderSchedule._();
 
+  /// Returns whether [protocol] has a reminder due on [date].
   static bool isDueOnDate(Protocol protocol, DateTime date) {
     if (!protocol.isActive || !_hasReminder(protocol)) {
       return false;
@@ -26,6 +28,7 @@ class ProtocolReminderSchedule {
     };
   }
 
+  /// Returns the reminder [DateTime] on [date], if any.
   static DateTime? scheduledDateTimeOn(Protocol protocol, DateTime date) {
     if (!isDueOnDate(protocol, date)) {
       return null;
@@ -42,6 +45,7 @@ class ProtocolReminderSchedule {
     return _dateTimeOnDay(day, hours: hours, minutes: minutes);
   }
 
+  /// Returns the next reminder at or after [anchor].
   static DateTime? nextReminderAfter(
     Protocol protocol,
     DateTime anchor, {
@@ -61,6 +65,7 @@ class ProtocolReminderSchedule {
     return null;
   }
 
+  /// Returns up to [count] upcoming reminders after [anchor].
   static List<DateTime> upcomingReminders(
     Protocol protocol,
     DateTime anchor, {
@@ -114,9 +119,9 @@ class ProtocolReminderSchedule {
     int year,
     int month,
     int day, {
+    required bool isUtc,
     int hours = 0,
     int minutes = 0,
-    required bool isUtc,
   }) {
     return isUtc
         ? DateTime.utc(year, month, day, hours, minutes)

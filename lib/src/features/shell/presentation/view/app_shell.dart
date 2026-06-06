@@ -1,30 +1,50 @@
 import 'package:flutter/material.dart';
 import 'package:peptide_tracker_app/src/core/reminders/protocol_reminder_schedule.dart';
+import 'package:peptide_tracker_app/src/core/widgets/stat_chip.dart';
 import 'package:peptide_tracker_app/src/features/calculator/presentation/view/calculator_page.dart';
 import 'package:peptide_tracker_app/src/features/history/domain/entities/log_entry.dart';
 import 'package:peptide_tracker_app/src/features/history/domain/entities/log_entry_draft.dart';
 import 'package:peptide_tracker_app/src/features/history/domain/entities/log_entry_status.dart';
 import 'package:peptide_tracker_app/src/features/history/domain/repositories/log_entries_repository.dart';
+import 'package:peptide_tracker_app/src/features/library/presentation/view/library_page.dart';
 import 'package:peptide_tracker_app/src/features/onboarding/data/app_launch_repository.dart';
 import 'package:peptide_tracker_app/src/features/protocols/domain/entities/compound_category.dart';
 import 'package:peptide_tracker_app/src/features/protocols/domain/entities/managed_protocol.dart';
 import 'package:peptide_tracker_app/src/features/protocols/domain/entities/protocol_editor_draft.dart';
 import 'package:peptide_tracker_app/src/features/protocols/domain/entities/protocol_schedule_type.dart';
 import 'package:peptide_tracker_app/src/features/protocols/domain/repositories/protocols_repository.dart';
+import 'package:peptide_tracker_app/src/features/settings/presentation/view/settings_page.dart';
 
+/// Root shell with bottom navigation for the main app tabs.
 class AppShell extends StatefulWidget {
+  /// Creates the app shell.
   const AppShell({
     required this.launchSnapshot,
     required this.logEntriesRepository,
     required this.protocolsRepository,
     required this.now,
+    required this.themeMode,
+    required this.onThemeModeChanged,
     super.key,
   });
 
+  /// Launch metadata captured during onboarding.
   final LaunchSnapshot launchSnapshot;
+
+  /// Repository used for dose log entries.
   final LogEntriesRepository logEntriesRepository;
+
+  /// Repository used for protocol management.
   final ProtocolsRepository protocolsRepository;
+
+  /// Clock used for due-date and reminder calculations.
   final DateTime Function() now;
+
+  /// Currently selected theme mode.
+  final ThemeMode themeMode;
+
+  /// Called when the user changes the theme mode from Settings.
+  final ValueChanged<ThemeMode> onThemeModeChanged;
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -35,23 +55,26 @@ class _AppShellState extends State<AppShell> {
 
   @override
   Widget build(BuildContext context) {
-    final destinations = const [
-      NavigationDestination(icon: Icon(Icons.today_outlined), label: 'Today'),
+    const destinations = [
+      NavigationDestination(
+        icon: Icon(Icons.today_outlined),
+        selectedIcon: Icon(Icons.today),
+        label: 'Today',
+      ),
       NavigationDestination(
         icon: Icon(Icons.medication_outlined),
+        selectedIcon: Icon(Icons.medication),
         label: 'Protocols',
       ),
       NavigationDestination(
-        icon: Icon(Icons.calculate_outlined),
-        label: 'Calculator',
+        icon: Icon(Icons.menu_book_outlined),
+        selectedIcon: Icon(Icons.menu_book),
+        label: 'Library',
       ),
       NavigationDestination(
-        icon: Icon(Icons.history_outlined),
-        label: 'History',
-      ),
-      NavigationDestination(
-        icon: Icon(Icons.settings_outlined),
-        label: 'Settings',
+        icon: Icon(Icons.insights_outlined),
+        selectedIcon: Icon(Icons.insights),
+        label: 'Progress',
       ),
     ];
 
@@ -61,25 +84,71 @@ class _AppShellState extends State<AppShell> {
         now: widget.now,
         onOpenHistory: () => setState(() => _selectedIndex = 3),
         onOpenProtocols: () => setState(() => _selectedIndex = 1),
+        onOpenSettings: _openSettings,
         protocolsRepository: widget.protocolsRepository,
       ),
       _ProtocolsPage(protocolsRepository: widget.protocolsRepository),
-      const CalculatorPage(),
-      _HistoryPage(
+      const LibraryPage(),
+      _ProgressPage(
         logEntriesRepository: widget.logEntriesRepository,
         onBackToToday: () => setState(() => _selectedIndex = 0),
       ),
-      _SettingsPage(snapshot: widget.launchSnapshot),
     ];
 
     return Scaffold(
       body: IndexedStack(index: _selectedIndex, children: pages),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _openLog,
+        tooltip: 'Log',
+        child: const Icon(Icons.add),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         destinations: destinations,
         onDestinationSelected: (index) {
           setState(() => _selectedIndex = index);
         },
+      ),
+    );
+  }
+
+  void _openSettings() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => SettingsPage(
+          snapshot: widget.launchSnapshot,
+          themeMode: widget.themeMode,
+          onThemeModeChanged: widget.onThemeModeChanged,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openLog() async {
+    final protocols = await widget.protocolsRepository.watchAll().first;
+    if (!mounted) {
+      return;
+    }
+
+    final activeProtocols = protocols
+        .where((item) => item.protocol.isActive)
+        .toList(growable: false);
+
+    if (activeProtocols.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Create a routine before saving logs.')),
+      );
+      return;
+    }
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => _QuickLogSheet(
+        activeProtocols: activeProtocols,
+        logEntriesRepository: widget.logEntriesRepository,
+        now: widget.now,
       ),
     );
   }
@@ -91,6 +160,7 @@ class _TodayPage extends StatelessWidget {
     required this.now,
     required this.onOpenHistory,
     required this.onOpenProtocols,
+    required this.onOpenSettings,
     required this.protocolsRepository,
   });
 
@@ -98,6 +168,7 @@ class _TodayPage extends StatelessWidget {
   final DateTime Function() now;
   final VoidCallback onOpenHistory;
   final VoidCallback onOpenProtocols;
+  final VoidCallback onOpenSettings;
   final ProtocolsRepository protocolsRepository;
 
   @override
@@ -105,7 +176,16 @@ class _TodayPage extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Today')),
+      appBar: AppBar(
+        title: const Text('Today'),
+        actions: [
+          IconButton(
+            onPressed: onOpenSettings,
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: 'Settings',
+          ),
+        ],
+      ),
       body: StreamBuilder<List<ManagedProtocol>>(
         stream: protocolsRepository.watchAll(),
         builder: (context, snapshot) {
@@ -163,7 +243,8 @@ class _TodayPage extends StatelessWidget {
                             Text('No routines yet'),
                             SizedBox(height: 8),
                             Text(
-                              'Create your first routine to see reminders and quick logging here.',
+                              'Create your first routine to see reminders '
+                              'and quick logging here.',
                             ),
                           ],
                         ),
@@ -184,7 +265,11 @@ class _TodayPage extends StatelessWidget {
                             Text(
                               nextReminder == null
                                   ? 'No upcoming reminders scheduled.'
-                                  : 'Next reminder at ${_formatReminderDateTime(nextReminder.scheduledAt, currentTime)}',
+                                  : 'Next reminder at '
+                                        '${_formatReminderDateTime(
+                                          nextReminder.scheduledAt,
+                                          currentTime,
+                                        )}',
                             ),
                           ],
                         ),
@@ -206,15 +291,15 @@ class _TodayPage extends StatelessWidget {
                               spacing: 12,
                               runSpacing: 12,
                               children: [
-                                _DashboardStatChip(
+                                StatChip(
                                   label: 'Active routines',
                                   value: activeProtocols.length.toString(),
                                 ),
-                                _DashboardStatChip(
+                                StatChip(
                                   label: 'Due today',
                                   value: dueTodayEntries.length.toString(),
                                 ),
-                                _DashboardStatChip(
+                                StatChip(
                                   label: 'Recent logs',
                                   value: recentEntries.length.toString(),
                                 ),
@@ -241,8 +326,17 @@ class _TodayPage extends StatelessWidget {
                           label: const Text('Open quick log'),
                         ),
                         FilledButton.tonalIcon(
+                          onPressed: () => Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => const CalculatorPage(),
+                            ),
+                          ),
+                          icon: const Icon(Icons.calculate_outlined),
+                          label: const Text('Calculator'),
+                        ),
+                        FilledButton.tonalIcon(
                           onPressed: onOpenHistory,
-                          icon: const Icon(Icons.history_outlined),
+                          icon: const Icon(Icons.insights_outlined),
                           label: const Text('View all history'),
                         ),
                         FilledButton.tonalIcon(
@@ -260,7 +354,8 @@ class _TodayPage extends StatelessWidget {
                           subtitle: Text(
                             recentEntries.first.note.isNotEmpty
                                 ? recentEntries.first.note
-                                : 'Logged ${recentEntries.first.protocolNameSnapshot}',
+                                : 'Logged '
+                                  '${recentEntries.first.protocolNameSnapshot}',
                           ),
                           trailing: TextButton(
                             onPressed: onOpenHistory,
@@ -285,7 +380,8 @@ class _TodayPage extends StatelessWidget {
                           child: ListTile(
                             title: Text(entry.item.protocol.name),
                             subtitle: Text(
-                              '${entry.item.compound.name} • ${entry.item.scheduleSummary}',
+                              '${entry.item.compound.name} • '
+                              '${entry.item.scheduleSummary}',
                             ),
                             leading: Chip(
                               label: Text(
@@ -314,7 +410,11 @@ class _TodayPage extends StatelessWidget {
                           child: ListTile(
                             title: Text(entry.item.protocol.name),
                             subtitle: Text(
-                              '${entry.item.compound.name} • ${_formatReminderDateTime(entry.scheduledAt, currentTime)}',
+                              '${entry.item.compound.name} • '
+                              '${_formatReminderDateTime(
+                                entry.scheduledAt,
+                                currentTime,
+                              )}',
                             ),
                           ),
                         ),
@@ -329,7 +429,8 @@ class _TodayPage extends StatelessWidget {
                       child: Padding(
                         padding: EdgeInsets.all(16),
                         child: Text(
-                          'No saved records yet. Use Log to create your first history entry.',
+                          'No saved records yet. Use Log to create your '
+                          'first history entry.',
                         ),
                       ),
                     )
@@ -343,7 +444,8 @@ class _TodayPage extends StatelessWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                '${entry.compoundNameSnapshot} • ${entry.status.label} • ${entry.amountLabel}',
+                                '${entry.compoundNameSnapshot} • '
+                                '${entry.status.label} • ${entry.amountLabel}',
                               ),
                               if (entry.note.isNotEmpty) Text(entry.note),
                             ],
@@ -407,7 +509,7 @@ class _QuickLogSheetState extends State<_QuickLogSheet> {
   late String _selectedProtocolId;
   late final TextEditingController _amountController;
   late final TextEditingController _noteController;
-  var _status = LogEntryStatus.done;
+  LogEntryStatus _status = LogEntryStatus.done;
   var _isSaving = false;
 
   ManagedProtocol get _selectedProtocol => widget.activeProtocols.firstWhere(
@@ -450,7 +552,7 @@ class _QuickLogSheetState extends State<_QuickLogSheet> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: _selectedProtocolId,
+              initialValue: _selectedProtocolId,
               decoration: const InputDecoration(labelText: 'Protocol'),
               items: widget.activeProtocols
                   .map(
@@ -617,7 +719,8 @@ class _ProtocolsPage extends StatelessWidget {
                 Text('${activeProtocols.length} of 1 free routines used'),
                 const SizedBox(height: 8),
                 const Text(
-                  'Upgrade to add more routines, remove ads, and unlock advanced organization.',
+                  'Upgrade to add more routines, remove ads, and unlock '
+                  'advanced organization.',
                 ),
                 const SizedBox(height: 12),
                 FilledButton.tonal(
@@ -672,7 +775,8 @@ class _ProtocolsPage extends StatelessWidget {
                         ),
                         SizedBox(height: 8),
                         Text(
-                          'Create a routine to organize your schedule and reminders.',
+                          'Create a routine to organize your schedule '
+                          'and reminders.',
                         ),
                       ],
                     ),
@@ -749,7 +853,8 @@ class _ProtocolsPage extends StatelessWidget {
       builder: (context) => AlertDialog(
         title: const Text('Free includes 1 active routine'),
         content: const Text(
-          'Upgrade later to add more routines and unlock advanced organization.',
+          'Upgrade later to add more routines and unlock advanced '
+          'organization.',
         ),
         actions: [
           TextButton(
@@ -888,7 +993,11 @@ class _ProtocolDetailsViewState extends State<_ProtocolDetailsView> {
                   if (nextReminder != null) ...[
                     const SizedBox(height: 4),
                     Text(
-                      'Next reminder: ${_formatReminderDateTime(nextReminder, DateTime.now())}',
+                      'Next reminder: '
+                      '${_formatReminderDateTime(
+                        nextReminder,
+                        DateTime.now(),
+                      )}',
                     ),
                   ],
                 ],
@@ -977,7 +1086,8 @@ class _ProtocolDetailsViewState extends State<_ProtocolDetailsView> {
       builder: (context) => AlertDialog(
         title: const Text('Delete routine?'),
         content: const Text(
-          'This removes the routine and its linked compound from the MVP tracker.',
+          'This removes the routine and its linked compound from the '
+          'MVP tracker.',
         ),
         actions: [
           TextButton(
@@ -1117,7 +1227,8 @@ class _ProtocolEditorDialogState extends State<_ProtocolEditorDialog> {
                   onPressed: _pickReminderTime,
                   icon: const Icon(Icons.schedule_outlined),
                   label: Text(
-                    'Reminder time: ${_formatReminderMinutes(_reminderTimeMinutes)}',
+                    'Reminder time: '
+                    '${_formatReminderMinutes(_reminderTimeMinutes)}',
                   ),
                 ),
               ],
@@ -1210,8 +1321,8 @@ class _ProtocolEditorDialogState extends State<_ProtocolEditorDialog> {
   }
 }
 
-class _HistoryPage extends StatelessWidget {
-  const _HistoryPage({
+class _ProgressPage extends StatelessWidget {
+  const _ProgressPage({
     required this.logEntriesRepository,
     required this.onBackToToday,
   });
@@ -1222,7 +1333,7 @@ class _HistoryPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('History')),
+      appBar: AppBar(title: const Text('Progress')),
       body: StreamBuilder<List<LogEntry>>(
         stream: logEntriesRepository.watchRecent(),
         builder: (context, snapshot) {
@@ -1244,7 +1355,8 @@ class _HistoryPage extends StatelessWidget {
               Text('History timeline', style: theme.textTheme.headlineMedium),
               const SizedBox(height: 8),
               Text(
-                'Recent saved records appear here so you can confirm what was done and when.',
+                'Recent saved records appear here so you can confirm what '
+                'was done and when.',
                 style: theme.textTheme.bodyMedium,
               ),
               const SizedBox(height: 12),
@@ -1271,7 +1383,8 @@ class _HistoryPage extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            '${entry.compoundNameSnapshot} • ${entry.status.label} • ${entry.amountLabel}',
+                            '${entry.compoundNameSnapshot} • '
+                            '${entry.status.label} • ${entry.amountLabel}',
                           ),
                           Text(
                             _formatHistoryDateTime(entry.loggedAt.toLocal()),
@@ -1286,104 +1399,6 @@ class _HistoryPage extends StatelessWidget {
             ],
           );
         },
-      ),
-    );
-  }
-}
-
-class _DashboardStatChip extends StatelessWidget {
-  const _DashboardStatChip({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(value, style: theme.textTheme.titleLarge),
-          const SizedBox(height: 2),
-          Text(label, style: theme.textTheme.bodySmall),
-        ],
-      ),
-    );
-  }
-}
-
-class _SettingsPage extends StatelessWidget {
-  const _SettingsPage({required this.snapshot});
-
-  final LaunchSnapshot snapshot;
-
-  @override
-  Widget build(BuildContext context) {
-    final acceptedAt = snapshot.acceptedAt;
-    final acceptedLabel = acceptedAt == null
-        ? 'Not recorded'
-        : '${acceptedAt.year}-${acceptedAt.month.toString().padLeft(2, '0')}-${acceptedAt.day.toString().padLeft(2, '0')}';
-
-    return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const Text(
-            'Legal and safety',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'This app is a private tracking and record-keeping tool.',
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'It does not provide medical advice, diagnosis, treatment, or personalized recommendations.',
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Any calculations shown are generated from values you enter and are provided for informational purposes only.',
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Accepted disclaimer version: ${snapshot.acceptedDisclaimerVersion ?? currentDisclaimerVersion}',
-          ),
-          const SizedBox(height: 4),
-          Text('Accepted on: $acceptedLabel'),
-          const SizedBox(height: 16),
-          FilledButton.tonal(
-            onPressed: () => showDialog<void>(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: const Text('Medical and safety notice'),
-                content: const SingleChildScrollView(
-                  child: Text(
-                    'This app is for record-keeping, reminders, and informational calculations based on values you enter. It does not provide medical advice, diagnosis, treatment guidance, or personalized dose recommendations. Always use your own judgment and consult a qualified healthcare professional for medical decisions.',
-                  ),
-                ),
-              ),
-            ),
-            child: const Text('Review medical and safety notice'),
-          ),
-          const SizedBox(height: 24),
-          const Text(
-            'Privacy',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 8),
-          const Text('No account required in the MVP.'),
-          const SizedBox(height: 8),
-          const Text('Your data is stored locally on this device.'),
-        ],
       ),
     );
   }

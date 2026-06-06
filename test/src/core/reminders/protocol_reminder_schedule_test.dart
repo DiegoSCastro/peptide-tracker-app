@@ -9,7 +9,7 @@ void main() {
       'marks an every-n-days protocol as due today when cadence matches',
       () {
         final protocol = _protocol(
-          startDate: DateTime.utc(2026, 6, 1),
+          startDate: DateTime.utc(2026, 6),
           intervalDays: 7,
         );
 
@@ -29,7 +29,7 @@ void main() {
 
     test('finds the next reminder after the current time', () {
       final protocol = _protocol(
-        startDate: DateTime.utc(2026, 6, 1),
+        startDate: DateTime.utc(2026, 6),
         intervalDays: 7,
       );
 
@@ -105,7 +105,7 @@ Protocol _protocol({
     scheduleType: scheduleType,
     intervalDays: intervalDays,
     reminderMinutesAfterMidnight: reminderMinutesAfterMidnight,
-    startDate: startDate ?? DateTime.utc(2026, 6, 1),
+    startDate: startDate ?? DateTime.utc(2026, 6),
     isActive: true,
     notes: 'Weekly tracker',
     createdAt: now,
