@@ -5,6 +5,7 @@ import 'package:peptide_tracker_app/src/core/widgets/section_header.dart';
 import 'package:peptide_tracker_app/src/features/calculator/presentation/view/calculator_page.dart';
 import 'package:peptide_tracker_app/src/features/library/domain/entities/compound_category.dart';
 import 'package:peptide_tracker_app/src/features/library/domain/entities/compound_info.dart';
+import 'package:peptide_tracker_app/src/features/library/domain/entities/reported_pattern.dart';
 
 /// Full compound reference screen with attributed patterns and sources.
 class CompoundDetailPage extends StatelessWidget {
@@ -43,6 +44,8 @@ class CompoundDetailPage extends StatelessWidget {
           ],
           const SizedBox(height: AppSpacing.sm),
           Text(compound.summary, style: theme.textTheme.bodyLarge),
+          const SizedBox(height: AppSpacing.sm),
+          _DetailRow(label: 'Half-life', value: compound.halfLife),
           const SizedBox(height: AppSpacing.md),
           const _InfoBanner(
             icon: Icons.info_outline,
@@ -50,36 +53,6 @@ class CompoundDetailPage extends StatelessWidget {
                 'Educational reference only. Reported patterns below come '
                 'from labeling, literature, or community sources — not from '
                 'this app.',
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          const SectionHeader(title: 'What it is'),
-          const SizedBox(height: AppSpacing.xs),
-          Text(compound.whatItIs, style: theme.textTheme.bodyMedium),
-          const SizedBox(height: AppSpacing.lg),
-          const SectionHeader(title: 'Mechanism (overview)'),
-          const SizedBox(height: AppSpacing.xs),
-          Text(compound.mechanism, style: theme.textTheme.bodyMedium),
-          const SizedBox(height: AppSpacing.lg),
-          AppCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Pharmacokinetics', style: theme.textTheme.titleMedium),
-                const SizedBox(height: AppSpacing.sm),
-                _DetailRow(label: 'Half-life', value: compound.halfLife),
-                if (compound.tmax.isNotEmpty)
-                  _DetailRow(label: 'Tmax', value: compound.tmax),
-                const SizedBox(height: AppSpacing.xs),
-                Text('Routes discussed', style: theme.textTheme.labelMedium),
-                const SizedBox(height: AppSpacing.xxs),
-                ...compound.typicalRoutes.map(
-                  (route) => Padding(
-                    padding: const EdgeInsets.only(bottom: AppSpacing.xxs),
-                    child: Text('• $route'),
-                  ),
-                ),
-              ],
-            ),
           ),
           const SizedBox(height: AppSpacing.lg),
           const SectionHeader(title: 'Reported patterns in sources'),
@@ -92,75 +65,79 @@ class CompoundDetailPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
-          ...compound.reportedPatterns.map(
-            (pattern) => Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-              child: AppCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      pattern.context,
-                      style: theme.textTheme.titleSmall?.copyWith(
+          if (compound.reportedPatterns.isNotEmpty)
+            _PatternCard(pattern: compound.reportedPatterns.first),
+          if (compound.reportedPatterns.length > 1)
+            _ExpandableSection(
+              title: 'More reported patterns',
+              children: [
+                for (final pattern in compound.reportedPatterns.skip(1))
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                    child: _PatternCard(pattern: pattern),
+                  ),
+              ],
+            ),
+          const SizedBox(height: AppSpacing.sm),
+          _ExpandableSection(
+            title: 'What it is',
+            children: [
+              Text(compound.whatItIs, style: theme.textTheme.bodyMedium),
+            ],
+          ),
+          _ExpandableSection(
+            title: 'Mechanism (overview)',
+            children: [
+              Text(compound.mechanism, style: theme.textTheme.bodyMedium),
+              if (compound.tmax.isNotEmpty) ...[
+                const SizedBox(height: AppSpacing.sm),
+                _DetailRow(label: 'Tmax', value: compound.tmax),
+              ],
+              if (compound.typicalRoutes.isNotEmpty) ...[
+                const SizedBox(height: AppSpacing.xs),
+                Text('Routes discussed', style: theme.textTheme.labelMedium),
+                const SizedBox(height: AppSpacing.xxs),
+                ...compound.typicalRoutes.map((route) => Text('• $route')),
+              ],
+            ],
+          ),
+          _ExpandableSection(
+            title: 'Logging tips',
+            children: [
+              ...compound.loggingTips.map(
+                (tip) => Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.xxs),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.edit_note_outlined,
+                        size: 18,
                         color: theme.colorScheme.primary,
                       ),
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      pattern.amountDescription,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.xxs),
-                    Text('Frequency: ${pattern.frequency}'),
-                    if (pattern.notes.isNotEmpty) ...[
-                      const SizedBox(height: AppSpacing.xxs),
-                      Text(
-                        pattern.notes,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      Expanded(child: Text(tip)),
                     ],
-                  ],
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
-          const SizedBox(height: AppSpacing.md),
-          const SectionHeader(title: 'Logging tips'),
-          const SizedBox(height: AppSpacing.xs),
-          ...compound.loggingTips.map(
-            (tip) => Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.xxs),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    Icons.edit_note_outlined,
-                    size: 18,
-                    color: theme.colorScheme.primary,
+          _ExpandableSection(
+            title: 'Sources',
+            children: [
+              ...compound.sources.map(
+                (source) => Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                  child: Text(
+                    source.reference.isEmpty
+                        ? '• ${source.title}'
+                        : '• ${source.title} (${source.reference})',
+                    style: theme.textTheme.bodySmall,
                   ),
-                  const SizedBox(width: AppSpacing.xs),
-                  Expanded(child: Text(tip)),
-                ],
+                ),
               ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          const SectionHeader(title: 'Sources'),
-          const SizedBox(height: AppSpacing.xs),
-          ...compound.sources.map(
-            (source) => Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-              child: Text(
-                source.reference.isEmpty
-                    ? '• ${source.title}'
-                    : '• ${source.title} (${source.reference})',
-                style: theme.textTheme.bodySmall,
-              ),
-            ),
+            ],
           ),
           const SizedBox(height: AppSpacing.lg),
           AppCard(
@@ -179,7 +156,12 @@ class CompoundDetailPage extends StatelessWidget {
               FilledButton.icon(
                 onPressed: () => Navigator.of(context).push(
                   MaterialPageRoute<void>(
-                    builder: (_) => const CalculatorPage(),
+                    builder: (_) => CalculatorPage(
+                      prefill: CalculatorPrefill(
+                        compoundName: compound.name,
+                        halfLife: compound.halfLife,
+                      ),
+                    ),
                   ),
                 ),
                 icon: const Icon(Icons.calculate_outlined),
@@ -203,6 +185,71 @@ class CompoundDetailPage extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xxl),
         ],
+      ),
+    );
+  }
+}
+
+class _PatternCard extends StatelessWidget {
+  const _PatternCard({required this.pattern});
+
+  final ReportedPattern pattern;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            pattern.context,
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: theme.colorScheme.primary,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            pattern.amountDescription,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xxs),
+          Text('Frequency: ${pattern.frequency}'),
+          if (pattern.notes.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.xxs),
+            Text(
+              pattern.notes,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// A collapsible "Show more" section to keep the detail page scannable.
+class _ExpandableSection extends StatelessWidget {
+  const _ExpandableSection({required this.title, required this.children});
+
+  final String title;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Theme(
+      data: theme.copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        title: Text(title, style: theme.textTheme.titleMedium),
+        tilePadding: EdgeInsets.zero,
+        childrenPadding: const EdgeInsets.only(bottom: AppSpacing.md),
+        expandedCrossAxisAlignment: CrossAxisAlignment.start,
+        children: children,
       ),
     );
   }

@@ -58,7 +58,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Peptide Tracker')),
+      appBar: AppBar(title: const Text('Easy Peptide Tracker')),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(

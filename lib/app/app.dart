@@ -102,7 +102,7 @@ class _AppState extends State<App> {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Peptide Tracker',
+      title: 'Easy Peptide Tracker',
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: _themeMode,

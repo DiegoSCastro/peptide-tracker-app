@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:peptide_tracker_app/src/core/design/app_spacing.dart';
 import 'package:peptide_tracker_app/src/core/widgets/app_card.dart';
 import 'package:peptide_tracker_app/src/core/widgets/empty_state.dart';
+import 'package:peptide_tracker_app/src/core/widgets/large_title_app_bar.dart';
 import 'package:peptide_tracker_app/src/features/library/data/datasources/library_asset_data_source.dart';
 import 'package:peptide_tracker_app/src/features/library/data/repositories/library_repository_impl.dart';
 import 'package:peptide_tracker_app/src/features/library/domain/entities/compound_category.dart';
@@ -47,23 +48,32 @@ class _LibraryViewState extends State<_LibraryView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Library')),
       body: BlocBuilder<LibraryCubit, LibraryState>(
         builder: (context, state) {
-          return switch (state.status) {
-            LibraryStatus.initial || LibraryStatus.loading => const Center(
-              child: CircularProgressIndicator(),
-            ),
-            LibraryStatus.failure => EmptyState(
-              icon: Icons.menu_book_outlined,
-              title: 'Library unavailable',
-              message: state.message,
-            ),
-            LibraryStatus.success => _LibraryContent(
-              state: state,
-              searchController: _searchController,
-            ),
-          };
+          return CustomScrollView(
+            slivers: [
+              const LargeTitleAppBar(title: 'Library'),
+              switch (state.status) {
+                LibraryStatus.initial ||
+                LibraryStatus.loading => const SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+                LibraryStatus.failure => SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: EmptyState(
+                    icon: Icons.menu_book_outlined,
+                    title: 'Library unavailable',
+                    message: state.message,
+                  ),
+                ),
+                LibraryStatus.success => _LibraryContent(
+                  state: state,
+                  searchController: _searchController,
+                ),
+              },
+            ],
+          );
         },
       ),
     );
@@ -93,14 +103,12 @@ class _LibraryContent extends StatelessWidget {
     final cubit = context.read<LibraryCubit>();
     final visible = state.visibleCompounds;
 
-    return CustomScrollView(
+    return SliverMainAxisGroup(
       slivers: [
         SliverPadding(
-          padding: AppSpacing.screen.copyWith(bottom: AppSpacing.sm),
+          padding: AppSpacing.screen.copyWith(top: 0, bottom: AppSpacing.sm),
           sliver: SliverList(
             delegate: SliverChildListDelegate([
-              Text('Library', style: theme.textTheme.headlineLarge),
-              const SizedBox(height: AppSpacing.xs),
               Text(
                 'Compound reference with patterns reported in labeling, '
                 'literature, and community sources. Informational only.',
@@ -130,18 +138,20 @@ class _LibraryContent extends StatelessWidget {
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
-                  children: _filterCategories.map((category) {
-                    final selected = state.selectedCategory == category;
-                    final label = category?.label ?? 'All';
-                    return Padding(
-                      padding: const EdgeInsets.only(right: AppSpacing.xs),
-                      child: FilterChip(
-                        label: Text(label),
-                        selected: selected,
-                        onSelected: (_) => cubit.setCategory(category),
-                      ),
-                    );
-                  }).toList(growable: false),
+                  children: _filterCategories
+                      .map((category) {
+                        final selected = state.selectedCategory == category;
+                        final label = category?.label ?? 'All';
+                        return Padding(
+                          padding: const EdgeInsets.only(right: AppSpacing.xs),
+                          child: FilterChip(
+                            label: Text(label),
+                            selected: selected,
+                            onSelected: (_) => cubit.setCategory(category),
+                          ),
+                        );
+                      })
+                      .toList(growable: false),
                 ),
               ),
               const SizedBox(height: AppSpacing.sm),

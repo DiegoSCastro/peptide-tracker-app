@@ -1,10 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:peptide_tracker_app/src/core/design/app_spacing.dart';
+import 'package:peptide_tracker_app/src/core/widgets/syringe_bar.dart';
 import 'package:peptide_tracker_app/src/features/calculator/domain/reconstitution_math.dart';
+
+/// Optional context used to pre-fill the calculator (e.g. from the Library).
+class CalculatorPrefill {
+  /// Creates a calculator prefill.
+  const CalculatorPrefill({required this.compoundName, this.halfLife = ''});
+
+  /// Compound name shown in the header.
+  final String compoundName;
+
+  /// Optional half-life string shown next to the name.
+  final String halfLife;
+}
 
 /// Compliance-safe calculator screen driven entirely by manual input.
 class CalculatorPage extends StatefulWidget {
   /// Creates the calculator page.
-  const CalculatorPage({super.key});
+  const CalculatorPage({this.prefill, super.key});
+
+  /// Optional pre-fill context (compound name / half-life).
+  final CalculatorPrefill? prefill;
 
   @override
   State<CalculatorPage> createState() => _CalculatorPageState();
@@ -19,7 +36,19 @@ class _CalculatorPageState extends State<CalculatorPage> {
   final _dilutionVolumeFocusNode = FocusNode();
   final _desiredAmountFocusNode = FocusNode();
 
+  static const _syringeSizes = [0.3, 0.5, 1.0];
+
   ReconstitutionMathResult? _result;
+  ReconstitutionMathResult? _preview;
+  double _syringeSizeMl = 1;
+
+  @override
+  void initState() {
+    super.initState();
+    _vialAmountController.addListener(_updatePreview);
+    _dilutionVolumeController.addListener(_updatePreview);
+    _desiredAmountController.addListener(_updatePreview);
+  }
 
   @override
   void dispose() {
@@ -35,6 +64,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final prefill = widget.prefill;
 
     return Scaffold(
       appBar: AppBar(title: const Text('User-input calculator')),
@@ -44,6 +74,10 @@ class _CalculatorPageState extends State<CalculatorPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (prefill != null) ...[
+                _PrefillHeader(prefill: prefill),
+                const SizedBox(height: 16),
+              ],
               Text(
                 'Simple calculator',
                 style: theme.textTheme.headlineMedium,
@@ -69,7 +103,16 @@ class _CalculatorPageState extends State<CalculatorPage> {
               ),
               if (_result != null) ...[
                 const SizedBox(height: 16),
-                _ResultCard(result: _result!),
+                _ResultCard(
+                  result: _result!,
+                  syringeSizeMl: _syringeSizeMl,
+                  syringeSizes: _syringeSizes,
+                  onSyringeSizeChanged: (size) =>
+                      setState(() => _syringeSizeMl = size),
+                ),
+              ] else if (_preview != null) ...[
+                const SizedBox(height: 16),
+                _PreviewCard(result: _preview!),
               ] else ...[
                 const SizedBox(height: 16),
                 const _EmptyStateCard(),
@@ -105,12 +148,47 @@ class _CalculatorPageState extends State<CalculatorPage> {
     _dilutionVolumeController.clear();
     _desiredAmountController.clear();
 
-    setState(() => _result = null);
+    setState(() {
+      _result = null;
+      _preview = null;
+    });
+  }
+
+  /// Recomputes a live preview as the user types, without form validation.
+  void _updatePreview() {
+    final vial = _tryParse(_vialAmountController.text);
+    final dilution = _tryParse(_dilutionVolumeController.text);
+    final desired = _tryParse(_desiredAmountController.text);
+
+    if (vial == null || dilution == null || desired == null) {
+      if (_preview != null) setState(() => _preview = null);
+      return;
+    }
+    if (vial <= 0 || dilution <= 0 || desired <= 0) {
+      if (_preview != null) setState(() => _preview = null);
+      return;
+    }
+
+    setState(() {
+      _preview = ReconstitutionMath.calculate(
+        ReconstitutionMathInput(
+          vialAmountMg: vial,
+          dilutionVolumeMl: dilution,
+          desiredAmountMg: desired,
+        ),
+      );
+    });
   }
 
   double _parseNumber(String value) {
     final normalized = value.trim().replaceAll(',', '.');
     return double.parse(normalized);
+  }
+
+  double? _tryParse(String value) {
+    final normalized = value.trim().replaceAll(',', '.');
+    if (normalized.isEmpty) return null;
+    return double.tryParse(normalized);
   }
 }
 
@@ -320,13 +398,95 @@ class _EmptyStateCard extends StatelessWidget {
   }
 }
 
-class _ResultCard extends StatelessWidget {
-  const _ResultCard({required this.result});
+class _PrefillHeader extends StatelessWidget {
+  const _PrefillHeader({required this.prefill});
+
+  final CalculatorPrefill prefill;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Icon(Icons.science_outlined, color: theme.colorScheme.primary),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    prefill.compoundName,
+                    style: theme.textTheme.titleMedium,
+                  ),
+                  if (prefill.halfLife.isNotEmpty)
+                    Text(
+                      'Half-life: ${prefill.halfLife}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PreviewCard extends StatelessWidget {
+  const _PreviewCard({required this.result});
 
   final ReconstitutionMathResult result;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Icon(
+              Icons.visibility_outlined,
+              size: 20,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Live preview: ${_format(result.concentrationMgPerMl)} mg/mL · '
+                '${_format(result.volumeToDrawMl)} mL per dose',
+                style: theme.textTheme.bodyMedium,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ResultCard extends StatelessWidget {
+  const _ResultCard({
+    required this.result,
+    required this.syringeSizeMl,
+    required this.syringeSizes,
+    required this.onSyringeSizeChanged,
+  });
+
+  final ReconstitutionMathResult result;
+  final double syringeSizeMl;
+  final List<double> syringeSizes;
+  final ValueChanged<double> onSyringeSizeChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -343,6 +503,27 @@ class _ResultCard extends StatelessWidget {
               'Volume to draw: ${_format(result.volumeToDrawMl)} mL',
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
             ),
+            const SizedBox(height: AppSpacing.md),
+            Text('Syringe size', style: theme.textTheme.labelLarge),
+            const SizedBox(height: AppSpacing.xs),
+            SegmentedButton<double>(
+              segments: [
+                for (final size in syringeSizes)
+                  ButtonSegment<double>(
+                    value: size,
+                    label: Text('${_format(size)} mL'),
+                  ),
+              ],
+              selected: {syringeSizeMl},
+              showSelectedIcon: false,
+              onSelectionChanged: (selection) =>
+                  onSyringeSizeChanged(selection.first),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            SyringeBar(
+              volumeMl: result.volumeToDrawMl,
+              syringeSizeMl: syringeSizeMl,
+            ),
             const SizedBox(height: 12),
             const Text('Double-check your entries before using this result.'),
           ],
@@ -350,11 +531,11 @@ class _ResultCard extends StatelessWidget {
       ),
     );
   }
+}
 
-  String _format(double value) {
-    final fixed = value.toStringAsFixed(4);
-    return fixed
-        .replaceFirst(RegExp(r'0+$'), '')
-        .replaceFirst(RegExp(r'\.$'), '');
-  }
+String _format(double value) {
+  final fixed = value.toStringAsFixed(4);
+  return fixed
+      .replaceFirst(RegExp(r'0+$'), '')
+      .replaceFirst(RegExp(r'\.$'), '');
 }

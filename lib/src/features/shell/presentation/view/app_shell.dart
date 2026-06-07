@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:peptide_tracker_app/src/core/design/app_colors.dart';
 import 'package:peptide_tracker_app/src/core/design/app_spacing.dart';
+import 'package:peptide_tracker_app/src/core/engagement/streak.dart';
 import 'package:peptide_tracker_app/src/core/reminders/protocol_reminder_schedule.dart';
 import 'package:peptide_tracker_app/src/core/widgets/action_card.dart';
 import 'package:peptide_tracker_app/src/core/widgets/app_bottom_nav.dart';
+import 'package:peptide_tracker_app/src/core/widgets/large_title_app_bar.dart';
 import 'package:peptide_tracker_app/src/core/widgets/section_header.dart';
 import 'package:peptide_tracker_app/src/core/widgets/stat_chip.dart';
 import 'package:peptide_tracker_app/src/core/widgets/status_chip.dart';
@@ -175,16 +177,6 @@ class _TodayPage extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Today'),
-        actions: [
-          IconButton(
-            onPressed: onOpenSettings,
-            icon: const Icon(Icons.settings_outlined),
-            tooltip: 'Settings',
-          ),
-        ],
-      ),
       body: StreamBuilder<List<ManagedProtocol>>(
         stream: protocolsRepository.watchAll(),
         builder: (context, snapshot) {
@@ -216,259 +208,282 @@ class _TodayPage extends StatelessWidget {
               : reminderEntries.first;
 
           return StreamBuilder<List<LogEntry>>(
-            stream: logEntriesRepository.watchRecent(limit: 3),
+            stream: logEntriesRepository.watchRecent(limit: 90),
             builder: (context, historySnapshot) {
-              final recentEntries = historySnapshot.data ?? const <LogEntry>[];
+              final allEntries = historySnapshot.data ?? const <LogEntry>[];
+              final recentEntries = allEntries.take(3).toList(growable: false);
+              final streak = currentStreak(
+                allEntries.map((entry) => entry.loggedAt),
+                today: currentTime,
+              );
 
-              return ListView(
-                padding: AppSpacing.screen,
-                children: [
-                  Text('Today', style: theme.textTheme.displayLarge),
-                  const SizedBox(height: AppSpacing.xxs),
-                  Text(
-                    _formatDayLabel(currentTime),
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
+              return CustomScrollView(
+                slivers: [
+                  LargeTitleAppBar(
+                    title: 'Today',
+                    actions: [
+                      IconButton(
+                        onPressed: onOpenSettings,
+                        icon: const Icon(Icons.settings_outlined),
+                        tooltip: 'Settings',
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: AppSpacing.xl),
-                  if (activeProtocols.isEmpty)
-                    const Card(
-                      child: Padding(
-                        padding: EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('No routines yet'),
-                            SizedBox(height: 8),
-                            Text(
-                              'Create your first routine to see reminders '
-                              'and quick logging here.',
+                  SliverPadding(
+                    padding: AppSpacing.screen,
+                    sliver: SliverList.list(
+                      children: [
+                        Text(
+                          _formatDayLabel(currentTime),
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
+                        if (activeProtocols.isEmpty)
+                          const Card(
+                            child: Padding(
+                              padding: EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('No routines yet'),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    'Create your first routine to see '
+                                    'reminders and quick logging here.',
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        else ...[
+                          Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${dueTodayEntries.length} due today',
+                                    style: theme.textTheme.titleMedium,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    nextReminder == null
+                                        ? 'No upcoming reminders scheduled.'
+                                        : 'Next reminder at '
+                                              '${_formatReminderDateTime(
+                                                nextReminder.scheduledAt,
+                                                currentTime,
+                                              )}',
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Essential status',
+                                    style: theme.textTheme.titleMedium,
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Wrap(
+                                    spacing: 12,
+                                    runSpacing: 12,
+                                    children: [
+                                      StatChip(
+                                        label: 'Active routines',
+                                        value: activeProtocols.length
+                                            .toString(),
+                                      ),
+                                      StatChip(
+                                        label: 'Due today',
+                                        value: dueTodayEntries.length
+                                            .toString(),
+                                      ),
+                                      StatChip(
+                                        label: streak == 1
+                                            ? 'Day logged'
+                                            : 'Day streak',
+                                        value: streak.toString(),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.xl),
+                          const SectionHeader(title: 'Quick actions'),
+                          const SizedBox(height: AppSpacing.sm),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ActionCard(
+                                  icon: Icons.science_outlined,
+                                  label: 'Log Dose',
+                                  onTap: () => _openQuickLogSheet(
+                                    context,
+                                    activeProtocols: activeProtocols,
+                                    initialProtocolId:
+                                        nextReminder?.item.protocol.id,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: AppSpacing.cardGap),
+                              Expanded(
+                                child: ActionCard(
+                                  icon: Icons.calculate_outlined,
+                                  label: 'Calculator',
+                                  tone: ActionCardTone.orange,
+                                  onTap: () => Navigator.of(context).push(
+                                    MaterialPageRoute<void>(
+                                      builder: (_) => const CalculatorPage(),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: AppSpacing.cardGap),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ActionCard(
+                                  icon: Icons.insights_outlined,
+                                  label: 'View History',
+                                  onTap: onOpenHistory,
+                                ),
+                              ),
+                              const SizedBox(width: AppSpacing.cardGap),
+                              Expanded(
+                                child: ActionCard(
+                                  icon: Icons.list_alt_outlined,
+                                  label: 'Manage Protocols',
+                                  tone: ActionCardTone.orange,
+                                  onTap: onOpenProtocols,
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (recentEntries.isNotEmpty) ...[
+                            const SizedBox(height: 16),
+                            _LatestActivityCard(
+                              entry: recentEntries.first,
+                              onOpenHistory: onOpenHistory,
                             ),
                           ],
-                        ),
-                      ),
-                    )
-                  else ...[
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
+                          const SizedBox(height: 24),
+                          Text('Due today', style: theme.textTheme.titleMedium),
+                          const SizedBox(height: 8),
+                          if (dueTodayEntries.isEmpty)
+                            const Card(
+                              child: Padding(
+                                padding: EdgeInsets.all(16),
+                                child: Text('Nothing is due today yet.'),
+                              ),
+                            )
+                          else
+                            ...dueTodayEntries.map(
+                              (entry) => Card(
+                                child: ListTile(
+                                  title: Text(entry.item.protocol.name),
+                                  subtitle: Text(
+                                    '${entry.item.compound.name} • '
+                                    '${entry.item.scheduleSummary}',
+                                  ),
+                                  leading: StatusChip(
+                                    label:
+                                        entry.scheduledAt.isAfter(currentTime)
+                                        ? 'Later today'
+                                        : 'Due now',
+                                    color:
+                                        entry.scheduledAt.isAfter(currentTime)
+                                        ? theme.colorScheme.primary
+                                        : AppSemanticColors.of(context).warning,
+                                  ),
+                                  trailing: FilledButton(
+                                    onPressed: () => _openQuickLogSheet(
+                                      context,
+                                      activeProtocols: activeProtocols,
+                                      initialProtocolId: entry.item.protocol.id,
+                                    ),
+                                    child: const Text('Log'),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          if (upcomingEntries.isNotEmpty) ...[
+                            const SizedBox(height: 24),
                             Text(
-                              '${dueTodayEntries.length} due today',
+                              'Upcoming',
                               style: theme.textTheme.titleMedium,
                             ),
                             const SizedBox(height: 8),
-                            Text(
-                              nextReminder == null
-                                  ? 'No upcoming reminders scheduled.'
-                                  : 'Next reminder at '
-                                        '${_formatReminderDateTime(
-                                          nextReminder.scheduledAt,
-                                          currentTime,
-                                        )}',
+                            ...upcomingEntries.map(
+                              (entry) => Card(
+                                child: ListTile(
+                                  title: Text(entry.item.protocol.name),
+                                  subtitle: Text(
+                                    '${entry.item.compound.name} • '
+                                    '${_formatReminderDateTime(
+                                      entry.scheduledAt,
+                                      currentTime,
+                                    )}',
+                                  ),
+                                ),
+                              ),
                             ),
                           ],
+                        ],
+                        const SizedBox(height: 24),
+                        Text(
+                          'Recent activity',
+                          style: theme.textTheme.titleMedium,
                         ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Essential status',
-                              style: theme.textTheme.titleMedium,
+                        const SizedBox(height: 8),
+                        if (recentEntries.isEmpty)
+                          const Card(
+                            child: Padding(
+                              padding: EdgeInsets.all(16),
+                              child: Text(
+                                'No saved records yet. Use Log to create your '
+                                'first history entry.',
+                              ),
                             ),
-                            const SizedBox(height: 12),
-                            Wrap(
-                              spacing: 12,
-                              runSpacing: 12,
-                              children: [
-                                StatChip(
-                                  label: 'Active routines',
-                                  value: activeProtocols.length.toString(),
+                          )
+                        else
+                          ...recentEntries.map(
+                            (entry) => Card(
+                              child: ListTile(
+                                title: Text(
+                                  'Logged ${entry.protocolNameSnapshot}',
                                 ),
-                                StatChip(
-                                  label: 'Due today',
-                                  value: dueTodayEntries.length.toString(),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      '${entry.compoundNameSnapshot} • '
+                                      '${entry.status.label} • '
+                                      '${entry.amountLabel}',
+                                    ),
+                                    if (entry.note.isNotEmpty) Text(entry.note),
+                                  ],
                                 ),
-                                StatChip(
-                                  label: 'Recent logs',
-                                  value: recentEntries.length.toString(),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.xl),
-                    const SectionHeader(title: 'Quick actions'),
-                    const SizedBox(height: AppSpacing.sm),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ActionCard(
-                            icon: Icons.science_outlined,
-                            label: 'Log Dose',
-                            onTap: () => _openQuickLogSheet(
-                              context,
-                              activeProtocols: activeProtocols,
-                              initialProtocolId:
-                                  nextReminder?.item.protocol.id,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.cardGap),
-                        Expanded(
-                          child: ActionCard(
-                            icon: Icons.calculate_outlined,
-                            label: 'Calculator',
-                            tone: ActionCardTone.orange,
-                            onTap: () => Navigator.of(context).push(
-                              MaterialPageRoute<void>(
-                                builder: (_) => const CalculatorPage(),
                               ),
                             ),
                           ),
-                        ),
                       ],
                     ),
-                    const SizedBox(height: AppSpacing.cardGap),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ActionCard(
-                            icon: Icons.insights_outlined,
-                            label: 'View History',
-                            onTap: onOpenHistory,
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.cardGap),
-                        Expanded(
-                          child: ActionCard(
-                            icon: Icons.list_alt_outlined,
-                            label: 'Manage Protocols',
-                            tone: ActionCardTone.orange,
-                            onTap: onOpenProtocols,
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (recentEntries.isNotEmpty) ...[
-                      const SizedBox(height: 16),
-                      Card(
-                        child: ListTile(
-                          title: const Text('Latest activity'),
-                          subtitle: Text(
-                            recentEntries.first.note.isNotEmpty
-                                ? recentEntries.first.note
-                                : 'Logged '
-                                  '${recentEntries.first.protocolNameSnapshot}',
-                          ),
-                          trailing: TextButton(
-                            onPressed: onOpenHistory,
-                            child: const Text('History'),
-                          ),
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 24),
-                    Text('Due today', style: theme.textTheme.titleMedium),
-                    const SizedBox(height: 8),
-                    if (dueTodayEntries.isEmpty)
-                      const Card(
-                        child: Padding(
-                          padding: EdgeInsets.all(16),
-                          child: Text('Nothing is due today yet.'),
-                        ),
-                      )
-                    else
-                      ...dueTodayEntries.map(
-                        (entry) => Card(
-                          child: ListTile(
-                            title: Text(entry.item.protocol.name),
-                            subtitle: Text(
-                              '${entry.item.compound.name} • '
-                              '${entry.item.scheduleSummary}',
-                            ),
-                            leading: StatusChip(
-                              label: entry.scheduledAt.isAfter(currentTime)
-                                  ? 'Later today'
-                                  : 'Due now',
-                              color: entry.scheduledAt.isAfter(currentTime)
-                                  ? theme.colorScheme.primary
-                                  : AppSemanticColors.of(context).warning,
-                            ),
-                            trailing: FilledButton(
-                              onPressed: () => _openQuickLogSheet(
-                                context,
-                                activeProtocols: activeProtocols,
-                                initialProtocolId: entry.item.protocol.id,
-                              ),
-                              child: const Text('Log'),
-                            ),
-                          ),
-                        ),
-                      ),
-                    if (upcomingEntries.isNotEmpty) ...[
-                      const SizedBox(height: 24),
-                      Text('Upcoming', style: theme.textTheme.titleMedium),
-                      const SizedBox(height: 8),
-                      ...upcomingEntries.map(
-                        (entry) => Card(
-                          child: ListTile(
-                            title: Text(entry.item.protocol.name),
-                            subtitle: Text(
-                              '${entry.item.compound.name} • '
-                              '${_formatReminderDateTime(
-                                entry.scheduledAt,
-                                currentTime,
-                              )}',
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                  const SizedBox(height: 24),
-                  Text('Recent activity', style: theme.textTheme.titleMedium),
-                  const SizedBox(height: 8),
-                  if (recentEntries.isEmpty)
-                    const Card(
-                      child: Padding(
-                        padding: EdgeInsets.all(16),
-                        child: Text(
-                          'No saved records yet. Use Log to create your '
-                          'first history entry.',
-                        ),
-                      ),
-                    )
-                  else
-                    ...recentEntries.map(
-                      (entry) => Card(
-                        child: ListTile(
-                          title: Text('Logged ${entry.protocolNameSnapshot}'),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                '${entry.compoundNameSnapshot} • '
-                                '${entry.status.label} • ${entry.amountLabel}',
-                              ),
-                              if (entry.note.isNotEmpty) Text(entry.note),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
+                  ),
                 ],
               );
             },
@@ -713,7 +728,6 @@ class _ProtocolsPage extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Protocols')),
       body: StreamBuilder<List<ManagedProtocol>>(
         stream: protocolsRepository.watchAll(),
         builder: (context, snapshot) {
@@ -726,109 +740,115 @@ class _ProtocolsPage extends StatelessWidget {
               .toList(growable: false);
           final hasFreeTierLimitReached = activeProtocols.isNotEmpty;
 
-          return ListView(
-            padding: AppSpacing.screen,
-            children: [
-              Text('Protocols', style: theme.textTheme.headlineLarge),
-              const SizedBox(height: AppSpacing.xs),
-              if (hasFreeTierLimitReached) ...[
-                Text('${activeProtocols.length} of 1 free routines used'),
-                const SizedBox(height: 8),
-                const Text(
-                  'Upgrade to add more routines, remove ads, and unlock '
-                  'advanced organization.',
-                ),
-                const SizedBox(height: 12),
-                FilledButton.tonal(
-                  onPressed: () => _showFreeTierIntercept(context),
-                  child: const Text('Upgrade'),
-                ),
-              ] else ...[
-                const Text('Your routines'),
-                const SizedBox(height: 8),
-                const Text('Organize schedules, reminders, and records.'),
-              ],
-              const SizedBox(height: 16),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: protocols.isEmpty
-                    ? FilledButton.icon(
-                        onPressed: () => _openEditor(context),
-                        icon: const Icon(Icons.add),
-                        label: const Text('Create routine'),
-                      )
-                    : Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          FilledButton.icon(
-                            onPressed: () => _openEditor(context),
-                            icon: const Icon(Icons.add),
-                            label: const Text('Add another routine'),
-                          ),
-                          if (hasFreeTierLimitReached)
-                            TextButton(
-                              onPressed: () => _showFreeTierIntercept(context),
-                              child: const Text('New protocol'),
-                            ),
-                        ],
+          return CustomScrollView(
+            slivers: [
+              const LargeTitleAppBar(title: 'Protocols'),
+              SliverPadding(
+                padding: AppSpacing.screen,
+                sliver: SliverList.list(
+                  children: [
+                    if (hasFreeTierLimitReached) ...[
+                      Text('${activeProtocols.length} of 1 free routines used'),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Upgrade to add more routines, remove ads, and unlock '
+                        'advanced organization.',
                       ),
-              ),
-              const SizedBox(height: 16),
-              if (protocols.isEmpty)
-                const Card(
-                  child: Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'No routines yet',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
+                      const SizedBox(height: 12),
+                      FilledButton.tonal(
+                        onPressed: () => _showFreeTierIntercept(context),
+                        child: const Text('Upgrade'),
+                      ),
+                    ] else ...[
+                      const Text('Your routines'),
+                      const SizedBox(height: 8),
+                      const Text('Organize schedules, reminders, and records.'),
+                    ],
+                    const SizedBox(height: 16),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: protocols.isEmpty
+                          ? FilledButton.icon(
+                              onPressed: () => _openEditor(context),
+                              icon: const Icon(Icons.add),
+                              label: const Text('Create routine'),
+                            )
+                          : Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                FilledButton.icon(
+                                  onPressed: () => _openEditor(context),
+                                  icon: const Icon(Icons.add),
+                                  label: const Text('Add another routine'),
+                                ),
+                                if (hasFreeTierLimitReached)
+                                  TextButton(
+                                    onPressed: () =>
+                                        _showFreeTierIntercept(context),
+                                    child: const Text('New protocol'),
+                                  ),
+                              ],
+                            ),
+                    ),
+                    const SizedBox(height: 16),
+                    if (protocols.isEmpty)
+                      const Card(
+                        child: Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'No routines yet',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                'Create a routine to organize your schedule '
+                                'and reminders.',
+                              ),
+                            ],
                           ),
                         ),
-                        SizedBox(height: 8),
-                        Text(
-                          'Create a routine to organize your schedule '
-                          'and reminders.',
+                      )
+                    else ...[
+                      if (activeProtocols.isNotEmpty) ...[
+                        Text('Active', style: theme.textTheme.titleMedium),
+                        const SizedBox(height: 8),
+                        ...activeProtocols.map(
+                          (item) => _ProtocolCard(
+                            item: item,
+                            onEdit: () => _openEditor(
+                              context,
+                              initialDraft: item.toEditorDraft(),
+                            ),
+                            onView: () => _openProtocolDetails(context, item),
+                          ),
                         ),
                       ],
-                    ),
-                  ),
-                )
-              else ...[
-                if (activeProtocols.isNotEmpty) ...[
-                  Text('Active', style: theme.textTheme.titleMedium),
-                  const SizedBox(height: 8),
-                  ...activeProtocols.map(
-                    (item) => _ProtocolCard(
-                      item: item,
-                      onEdit: () => _openEditor(
-                        context,
-                        initialDraft: item.toEditorDraft(),
-                      ),
-                      onView: () => _openProtocolDetails(context, item),
-                    ),
-                  ),
-                ],
-                if (inactiveProtocols.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  Text('Inactive', style: theme.textTheme.titleMedium),
-                  const SizedBox(height: 8),
-                  ...inactiveProtocols.map(
-                    (item) => _ProtocolCard(
-                      item: item,
-                      onEdit: () => _openEditor(
-                        context,
-                        initialDraft: item.toEditorDraft(),
-                      ),
-                      onView: () => _openProtocolDetails(context, item),
-                    ),
-                  ),
-                ],
-              ],
+                      if (inactiveProtocols.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        Text('Inactive', style: theme.textTheme.titleMedium),
+                        const SizedBox(height: 8),
+                        ...inactiveProtocols.map(
+                          (item) => _ProtocolCard(
+                            item: item,
+                            onEdit: () => _openEditor(
+                              context,
+                              initialDraft: item.toEditorDraft(),
+                            ),
+                            onView: () => _openProtocolDetails(context, item),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ],
+                ),
+              ),
             ],
           );
         },
@@ -882,6 +902,30 @@ class _ProtocolsPage extends StatelessWidget {
             child: const Text('Upgrade to Pro'),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _LatestActivityCard extends StatelessWidget {
+  const _LatestActivityCard({required this.entry, required this.onOpenHistory});
+
+  final LogEntry entry;
+  final VoidCallback onOpenHistory;
+
+  @override
+  Widget build(BuildContext context) {
+    final subtitle = entry.note.isNotEmpty
+        ? entry.note
+        : 'Logged ${entry.protocolNameSnapshot}';
+    return Card(
+      child: ListTile(
+        title: const Text('Latest activity'),
+        subtitle: Text(subtitle),
+        trailing: TextButton(
+          onPressed: onOpenHistory,
+          child: const Text('History'),
+        ),
       ),
     );
   }
@@ -1348,70 +1392,87 @@ class _ProgressPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Progress')),
       body: StreamBuilder<List<LogEntry>>(
         stream: logEntriesRepository.watchRecent(),
         builder: (context, snapshot) {
           final entries = snapshot.data ?? const <LogEntry>[];
-          if (entries.isEmpty) {
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.all(24),
-                child: Text('History is ready for your first saved records.'),
-              ),
-            );
-          }
 
-          final theme = Theme.of(context);
-
-          return ListView(
-            padding: AppSpacing.screen,
-            children: [
-              Text('History timeline', style: theme.textTheme.headlineLarge),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                'Recent saved records appear here so you can confirm what '
-                'was done and when.',
-                style: theme.textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 12),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: FilledButton.tonalIcon(
-                  onPressed: onBackToToday,
-                  icon: const Icon(Icons.today_outlined),
-                  label: const Text('Back to today'),
-                ),
-              ),
-              const SizedBox(height: 16),
-              ...List.generate(entries.length, (index) {
-                final entry = entries[index];
-                return Padding(
-                  padding: EdgeInsets.only(
-                    bottom: index == entries.length - 1 ? 0 : 8,
-                  ),
-                  child: Card(
-                    child: ListTile(
-                      title: Text(entry.protocolNameSnapshot),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            '${entry.compoundNameSnapshot} • '
-                            '${entry.status.label} • ${entry.amountLabel}',
-                          ),
-                          Text(
-                            _formatHistoryDateTime(entry.loggedAt.toLocal()),
-                          ),
-                          if (entry.note.isNotEmpty) Text(entry.note),
-                        ],
+          return CustomScrollView(
+            slivers: [
+              const LargeTitleAppBar(title: 'Progress'),
+              if (entries.isEmpty)
+                const SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Center(
+                      child: Text(
+                        'History is ready for your first saved records.',
                       ),
                     ),
                   ),
-                );
-              }),
+                )
+              else
+                SliverPadding(
+                  padding: AppSpacing.screen,
+                  sliver: SliverList.list(
+                    children: [
+                      Text(
+                        'History timeline',
+                        style: theme.textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        'Recent saved records appear here so you can confirm '
+                        'what was done and when.',
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: 12),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: FilledButton.tonalIcon(
+                          onPressed: onBackToToday,
+                          icon: const Icon(Icons.today_outlined),
+                          label: const Text('Back to today'),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      ...List.generate(entries.length, (index) {
+                        final entry = entries[index];
+                        return Padding(
+                          padding: EdgeInsets.only(
+                            bottom: index == entries.length - 1 ? 0 : 8,
+                          ),
+                          child: Card(
+                            child: ListTile(
+                              title: Text(entry.protocolNameSnapshot),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    '${entry.compoundNameSnapshot} • '
+                                    '${entry.status.label} • '
+                                    '${entry.amountLabel}',
+                                  ),
+                                  Text(
+                                    _formatHistoryDateTime(
+                                      entry.loggedAt.toLocal(),
+                                    ),
+                                  ),
+                                  if (entry.note.isNotEmpty) Text(entry.note),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+                ),
             ],
           );
         },
